@@ -88,11 +88,11 @@ No implementation or Cargo checks have been performed during planning. GPU accel
 ## User amendment: 2026-11-11
 
 The user specifies a new implementation of the documented mathematics and behavior under the
-existing [LICENSE.AGPL-3.0](../../../LICENSE.AGPL-3.0). This amendment supersedes the original
+existing [LICENSE.AGPL-3.0](../../LICENSE.AGPL-3.0). This amendment supersedes the original
 direct-translation, translated-source notice, and legacy-retention wording above. Preserve the
 original plan text as history. The legacy code is barely usable and serves only as a temporary
 implementation and goal reference. Scientific attribution and upstream provenance remain in
-[NOTICE](../../../NOTICE) and [REFERENCE_SPEC.md](../../REFERENCE_SPEC.md). Reference inspection
+[REFERENCE_SPEC.md](../REFERENCE_SPEC.md). Reference inspection
 has occurred; this amendment makes no clean-room claim.
 
 Keep the legacy reference through M12 fidelity comparisons. After final comparison evidence,
@@ -101,3 +101,71 @@ delete the old source and compiled copies, including `.f` files and executables 
 oracle regeneration may fetch a temporary upstream snapshot, but the finished native product
 has no end-user dependency on legacy source, executables, or Fortran.
 
+## User layout amendment: 2026-11-11
+
+Use the conventional single-crate layout: `Cargo.toml`, `Cargo.lock`, and `src/` at the repository
+root, with generated artifacts in root `target/`. Run Cargo commands from the repository root.
+This supersedes the original `oxillustrate/` package-directory wording above, which remains as
+historical plan text. Package `oxillustrate`, library `oxillustrate`, and binary `illustrate`
+names remain unchanged; no workspace or wrapper package is needed.
+
+
+
+## Interim implementation evidence: 2026-11-11
+
+Historical checkpoint, superseded by final closure below: M1 source analysis and review were accepted. M2 oracle renders and deterministic bounds/FPE checks
+are recorded in [goodsell_oracle.md](../active_plans/reports/goodsell_oracle.md). Native M3-M11 implementation is
+integrated in the root crate; the current suite contains 42 unit tests and 3 CLI integration tests.
+At this checkpoint, M12 fidelity/scale evidence and M13 documentation/installation/CI closure
+were in progress.
+
+The current milestone ledger is [goodsell_ledger.md](../active_plans/workstreams/goodsell_ledger.md). It records
+review state separately from implementation and local tests. At this checkpoint, supported-target
+and independent visual acceptance were pending; final acceptance is recorded below.
+
+## Evidence amendment: 2026-11-11
+
+M12 evidence and measurements refine the planned raster optimization. The native renderer visits
+each prepared sphere once, already avoiding repeated full-atom scans. Raster accounts for 2.9-7.3%
+of measured public render time on the tested 800 x 800 workloads. Persistent tile binning and row
+threading are deferred until a measured workload demonstrates a meaningful benefit. This is a
+scope decision, not an implemented optimization; it preserves the verified single-pass renderer
+and the plan's deterministic-output and scratch-memory boundaries. See
+[goodsell_fidelity.md](../active_plans/reports/goodsell_fidelity.md) and the D12 entry in
+[goodsell_ledger.md](../active_plans/workstreams/goodsell_ledger.md).
+
+M12's 19-scene comparison has exact mask agreement; 13 small scenes also have exact atom ownership
+and at most one-byte RGB differences. The independent image assessment passes and documents the
+hemoglobin D10 identity effect and one precision-tie pixel. M13 recorded clean-source macOS arm64
+and Linux x86_64 cross-build/emulated execution; physical x86_64 and remote CI execution remain
+unobserved. At this checkpoint, final integration review, legacy cleanup, and archival were open;
+the final closure below records their completion.
+
+## Final closure: 2026-11-11
+
+All M1-M13 milestones are complete and accepted. This closure supersedes the interim pending
+status above; the original user plan and amendments remain historical. Fresh independent
+[goodsell_integration_review.md](../active_plans/reports/goodsell_integration_review.md) returns
+ACCEPT after specification/quality reviews and independent visual PASS. The accepted milestone
+evidence is in [goodsell_ledger.md](../active_plans/workstreams/goodsell_ledger.md).
+
+Fresh integration verification passed 837 pytest tests, 42 Rust unit tests, 3 CLI integration
+tests, 1 doctest, formatting, all-target check/Clippy, and missing-docs rustdoc. All 19 comparison
+masks are exact, six format/gzip outputs match, and all five production module hashes plus the
+probe hash match the fidelity manifest. A post-cleanup 320 x 240 CIF PNG matches the clean-source
+macOS and emulated Linux sample SHA-256
+`1c9c892e48799866bdfb99e446f9f7a6c9366ef832997bbad6f70a6603d59efe`.
+
+[goodsell_cleanup.md](../active_plans/reports/goodsell_cleanup.md) records completed removal of
+legacy sources, old executables, patches, temporary plan checks, duplicate caches, and the QEMU
+core; primary scientific evidence and local papers remain. Oracle regeneration uses temporary
+verified pinned upstream inputs; the native product needs neither Fortran nor Python.
+D12 explicitly defers persistent tile bins/threading on measured evidence. Physical x86_64 and
+remote CI execution remain unobserved; Linux evidence is cross-build plus actual QEMU execution.
+The plan closes at this documented evidence boundary and is archived with Git history preserved.
+
+After archival and relative-link repair, the focused Markdown-link, guidance-format, ASCII,
+whitespace, and README-first-paragraph checks pass: 226 tests. `git diff --check` passes. The
+quality-90 README proof asset remains present at
+[hemoglobin.webp](../screenshots/hemoglobin.webp). Archival preserves the plan's exact bytes
+before and after `git mv`; only the authorized closure/evidence text and relative links changed.

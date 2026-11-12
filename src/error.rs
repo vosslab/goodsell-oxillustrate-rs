@@ -4,21 +4,34 @@ use std::path::PathBuf;
 #[derive(Debug)]
 /// Failures distinguishable by library callers without parser-specific types.
 pub enum Error {
+    /// Reading or writing a named path failed.
     Io {
+        /// Path involved in the failed operation.
         path: PathBuf,
+        /// Operating-system error retained as the source.
         source: std::io::Error,
     },
+    /// Input could not be parsed as the identified structure format.
     Parse {
+        /// Format parser that reported the failure.
         format: &'static str,
+        /// Human-readable parser detail.
         message: String,
     },
+    /// Scene configuration failed validation.
     Settings(String),
+    /// A requested model, assembly, or coordinate selection is unavailable or invalid.
     Selection(String),
+    /// Selection and visibility rules produced no renderable image content.
     EmptyScene,
+    /// Image dimensions or a required memory reservation could not be accommodated.
     Allocation {
+        /// Requested image width in pixels.
         width: u32,
+        /// Requested image height in pixels.
         height: u32,
     },
+    /// PNG encoding failed; the boxed source retains the encoder error without exposing its crate type.
     Image(Box<dyn std::error::Error + Send + Sync>),
 }
 

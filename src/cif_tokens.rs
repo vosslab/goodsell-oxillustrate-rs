@@ -37,7 +37,7 @@ fn tokens(input: &str) -> Result<Vec<Token>, Error> {
         }
         let start_line = line;
         let start = i;
-        let (text, bare) = if bytes[i] == b';' && (i == 0 || bytes[i - 1] == b'\n') {
+        let (mut text, bare) = if bytes[i] == b';' && (i == 0 || bytes[i - 1] == b'\n') {
             i += 1;
             let content = i;
             while i < bytes.len() && !(bytes[i] == b';' && bytes[i - 1] == b'\n') {
@@ -77,6 +77,19 @@ fn tokens(input: &str) -> Result<Vec<Token>, Error> {
             }
             (input[start..i].to_owned(), true)
         };
+        // CIF syntax is case-insensitive; quoted and ordinary data values retain their case.
+        if bare
+            && (text.starts_with('_')
+                || ["data_", "save_"].iter().any(|prefix| {
+                    text.get(..prefix.len())
+                        .is_some_and(|start| start.eq_ignore_ascii_case(prefix))
+                })
+                || ["loop_", "stop_", "global_"]
+                    .iter()
+                    .any(|keyword| text.eq_ignore_ascii_case(keyword)))
+        {
+            text.make_ascii_lowercase();
+        }
         result.push(Token {
             text,
             bare,
@@ -171,6 +184,11 @@ pub(crate) fn categories(input: &str) -> Result<Categories, Error> {
             i += 1;
         } else if token.bare && token.text == "stop_" {
             i += 1;
+        } else if token.bare && (token.text.starts_with("save_") || token.text == "global_") {
+            return Err(error(
+                token.line,
+                "save frames and global blocks are not supported; provide one structure data block",
+            ));
         } else {
             return Err(error(
                 token.line,
@@ -189,6 +207,35 @@ mod tests {
         let parsed = categories("data_t\n_test.name 'a b'\n_test.description\n;first\nsecond\n;\nloop_\n_atom_site.id\n_atom_site.auth_atom_id\n1 \"C'1\"\n").unwrap();
         assert_eq!(parsed["test"][0]["description"], "first\nsecond");
         assert_eq!(parsed["atom_site"][0]["auth_atom_id"], "C'1");
+        let reserved_values =
+            categories("DATA_t\n_test.Name 'LOOP_'\n_test.other \"SAVE_Frame\"\n").unwrap();
+        assert_eq!(reserved_values["test"][0]["name"], "LOOP_");
+        assert_eq!(reserved_values["test"][0]["other"], "SAVE_Frame");
         assert!(categories("data_t\nloop_\n_atom_site.id\n_atom_site.name\n1\n").is_err());
+        for duplicate in [
+            "DATA_t\n_test.Name A\n_TEST.name B\n",
+            "DATA_t\nLOOP_\n_test.Name\n_TEST.name\nA B\n",
+        ] {
+            assert!(
+                categories(duplicate)
+                    .unwrap_err()
+                    .to_string()
+                    .contains("duplicate")
+            );
+        }
+        for unsupported in ["SAVE_frame", "GLOBAL_"] {
+            assert!(
+                categories(&format!("DATA_t\n_test.name A\n{unsupported}\n"))
+                    .unwrap_err()
+                    .to_string()
+                    .contains("not supported")
+            );
+        }
+        assert!(
+            categories("DATA_first\n_test.name A\nDATA_second\n_test.name B\n")
+                .unwrap_err()
+                .to_string()
+                .contains("multiple data blocks")
+        );
     }
 }

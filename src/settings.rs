@@ -9,18 +9,29 @@ pub const MAX_PIXELS: usize = 16_777_216;
 #[serde(default, deny_unknown_fields)]
 /// JSON-deserializable scene configuration; call validate before preparing a scene.
 pub struct SceneSettings {
+    /// Output width in pixels.
     pub width: u32,
+    /// Output height in pixels.
     pub height: u32,
+    /// Deposited model number; absent selects the first available model.
     pub model: Option<i32>,
+    /// Biological assembly ID; absent uses deposited coordinates.
     pub assembly: Option<String>,
     /// Source-compatible x/y/z cards in degrees, applied Z then Y then X.
     pub orientation: [f64; 3],
+    /// Translation in source coordinates, in Angstroms.
     pub translation: [f64; 3],
+    /// Centering and orthographic scale controls.
     pub framing: Framing,
+    /// Background RGB components in the inclusive range 0 to 1.
     pub background: [f64; 3],
+    /// Ordered appearance rules; the first matching rule wins.
     pub atom_rules: Vec<AtomRule>,
+    /// Molecular color weights and color used for depth fog.
     pub fog: FogSettings,
+    /// Screen-space shadow parameters.
     pub shadows: ShadowSettings,
+    /// Independent contour, subunit, and residue outline controls.
     pub outlines: OutlineSettings,
 }
 
@@ -69,9 +80,13 @@ impl Default for Framing {
 #[serde(default, deny_unknown_fields)]
 /// First-match appearance overrides; omitted properties keep native defaults.
 pub struct AtomRule {
+    /// Conditions used to select atoms for this override.
     pub selector: AtomSelector,
+    /// Replacement RGB color in the inclusive range 0 to 1.
     pub color: Option<[f64; 3]>,
+    /// Replacement sphere radius in Angstroms; must be positive.
     pub radius: Option<f64>,
+    /// Whether to hide a match; false restores atoms hidden by native defaults.
     pub omit: Option<bool>,
 }
 
@@ -79,11 +94,17 @@ pub struct AtomRule {
 #[serde(default, deny_unknown_fields)]
 /// All supplied conditions must match one atom.
 pub struct AtomSelector {
+    /// Case-insensitive element symbol.
     pub element: Option<String>,
+    /// Exact chain ID and namespace.
     pub chain: Option<ChainSelector>,
+    /// Effective residue name.
     pub residue_name: Option<String>,
+    /// Inclusive numeric residue interval.
     pub residue_range: Option<ResidueRange>,
+    /// Effective atom name.
     pub atom_name: Option<String>,
+    /// Source atom category.
     pub kind: Option<AtomKind>,
 }
 
@@ -91,8 +112,10 @@ pub struct AtomSelector {
 #[serde(deny_unknown_fields)]
 /// Exact chain identifier in an explicitly chosen namespace.
 pub struct ChainSelector {
+    /// Namespace used to interpret the chain identifier; defaults to author.
     #[serde(default)]
     pub namespace: Namespace,
+    /// Exact chain identifier; no trimming or wildcard matching is applied.
     pub id: String,
 }
 
@@ -100,9 +123,12 @@ pub struct ChainSelector {
 #[serde(deny_unknown_fields)]
 /// Inclusive numeric residue bounds in the chosen namespace.
 pub struct ResidueRange {
+    /// Namespace used for numeric residue matching; defaults to author.
     #[serde(default)]
     pub namespace: Namespace,
+    /// Inclusive lower numeric residue bound.
     pub start: i32,
+    /// Inclusive upper numeric residue bound.
     pub end: i32,
 }
 
@@ -110,9 +136,11 @@ pub struct ResidueRange {
 #[serde(default, deny_unknown_fields)]
 /// Depth cueing endpoints expressed as molecular color weights.
 pub struct FogSettings {
+    /// Fog RGB color in the inclusive range 0 to 1.
     pub color: [f64; 3],
     /// Molecular color weights: one means no fog.
     pub front: f64,
+    /// Molecular color weight at the far endpoint; one means no fog.
     pub back: f64,
 }
 
@@ -130,11 +158,15 @@ impl Default for FogSettings {
 #[serde(default, deny_unknown_fields)]
 /// Fixed-neighborhood conical screen-space shadow parameters.
 pub struct ShadowSettings {
+    /// Whether to apply the shadow pass.
     pub enabled: bool,
+    /// Brightness decrement per shadow contribution.
     pub decrement: f64,
+    /// Distance-dependent shadow attenuation slope.
     pub slope: f64,
     /// Depth threshold in pixels, matching the source arithmetic.
     pub threshold: f64,
+    /// Minimum resulting brightness in the inclusive range 0 to 1.
     pub brightness_floor: f64,
 }
 
@@ -154,7 +186,9 @@ impl Default for ShadowSettings {
 #[serde(deny_unknown_fields)]
 /// A linear opacity ramp whose high endpoint must exceed low.
 pub struct Thresholds {
+    /// Lower edge threshold, where the opacity ramp begins.
     pub low: f64,
+    /// Upper edge threshold, where the opacity ramp reaches one.
     pub high: f64,
 }
 
@@ -162,16 +196,25 @@ pub struct Thresholds {
 #[serde(default, deny_unknown_fields)]
 /// Independent contour, subunit, and residue outline passes.
 pub struct OutlineSettings {
+    /// Enable the silhouette contour pass.
     pub contour_enabled: bool,
+    /// Enable boundaries between assembly subunits.
     pub subunit_enabled: bool,
+    /// Enable boundaries between residues.
     pub residue_enabled: bool,
+    /// Opacity thresholds for the contour pass.
     pub contour: Thresholds,
+    /// Opacity thresholds for the subunit pass.
     pub subunit: Thresholds,
+    /// Opacity thresholds for the residue pass.
     pub residue: Thresholds,
+    /// Neighborhood kernel width, from one through four.
     pub kernel: u8,
     /// Contour depth endpoints in Angstroms.
     pub depth_min: f64,
+    /// Maximum depth endpoint in Angstroms; must exceed `depth_min`.
     pub depth_max: f64,
+    /// Residue-number difference at which the residue pass draws an edge.
     pub residue_difference: f64,
 }
 
@@ -203,6 +246,10 @@ impl Default for OutlineSettings {
 
 impl SceneSettings {
     /// Return the checked image size within the documented scratch budget.
+    ///
+    /// # Errors
+    /// Returns `Error::Allocation` for zero dimensions, multiplication overflow, or an
+    /// image exceeding [`MAX_PIXELS`].
     pub fn pixel_count(&self) -> Result<usize, Error> {
         let count = (self.width as usize).checked_mul(self.height as usize);
         match count {
@@ -215,6 +262,10 @@ impl SceneSettings {
     }
 
     /// Reject invalid numeric settings before geometry or image allocation.
+    ///
+    /// # Errors
+    /// Returns `Error::Allocation` for invalid dimensions and `Error::Settings` for
+    /// non-finite or out-of-range values, invalid thresholds, or malformed rules.
     pub fn validate(&self) -> Result<(), Error> {
         self.pixel_count()?;
         if self.model.is_some_and(|model| model <= 0) {

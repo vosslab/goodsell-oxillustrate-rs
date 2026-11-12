@@ -1,6 +1,4 @@
-//! PDBx identities stay in owned rows; pdbtbx validates a transient coordinate projection.
-use std::io::{BufReader, Cursor};
-
+//! Normalize original PDBx/mmCIF identity, coordinate, and assembly categories.
 use crate::atom_table;
 use crate::cif_tokens;
 use crate::error::Error;
@@ -8,75 +6,7 @@ use crate::molecular::Structure;
 
 pub(crate) fn parse_cif(text: &str) -> Result<Structure, Error> {
     let categories = cif_tokens::categories(text)?;
-    let mut structure = atom_table::from_categories(&categories, Vec::new())?;
-    validate_coordinates(&mut structure)?;
-    Ok(structure)
-}
-
-pub(crate) fn validate_coordinates(structure: &mut Structure) -> Result<(), Error> {
-    // pdbtbx requires numeric IDs and label identifiers, and collapses author/label identities.
-    let mut projection = String::from(
-        "data_validation\nloop_\n_atom_site.group_PDB\n_atom_site.id\n_atom_site.type_symbol\n_atom_site.label_atom_id\n_atom_site.label_comp_id\n_atom_site.label_asym_id\n_atom_site.label_seq_id\n_atom_site.Cartn_x\n_atom_site.Cartn_y\n_atom_site.Cartn_z\n_atom_site.occupancy\n",
-    );
-    for (index, atom) in structure.atoms.iter().enumerate() {
-        projection.push_str(&format!(
-            "ATOM {} {} C UNK A {} {} {} {} {}\n",
-            index + 1,
-            atom.element,
-            index + 1,
-            atom.position[0],
-            atom.position[1],
-            atom.position[2],
-            atom.occupancy
-        ));
-    }
-    let result = pdbtbx::ReadOptions::new()
-        .set_format(pdbtbx::Format::Mmcif)
-        .set_level(pdbtbx::StrictnessLevel::Loose)
-        .read_raw(BufReader::new(Cursor::new(projection)));
-    match result {
-        Ok((parsed, warnings)) => {
-            structure.diagnostics.extend(
-                warnings
-                    .iter()
-                    .map(|w| format!("pdbtbx coordinate validation: {w}")),
-            );
-            if parsed.total_atom_count() != structure.atoms.len() {
-                return Err(Error::Parse {
-                    format: "PDBx",
-                    message: format!(
-                        "pdbtbx accepted {} of {} atoms; check atom elements and coordinates",
-                        parsed.total_atom_count(),
-                        structure.atoms.len()
-                    ),
-                });
-            }
-            for (expected, parsed) in structure.atoms.iter().zip(parsed.atoms()) {
-                let (x, y, z) = parsed.pos();
-                if expected.position != [x, y, z] {
-                    return Err(Error::Parse {
-                        format: "PDBx",
-                        message: format!(
-                            "coordinate validation disagreed for source atom {}",
-                            expected.source_id
-                        ),
-                    });
-                }
-            }
-            Ok(())
-        }
-        Err(errors) => Err(Error::Parse {
-            format: "PDBx",
-            message: format!(
-                "coordinate validation failed: {}",
-                errors
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join("; ")
-            ),
-        }),
-    }
+    atom_table::from_categories(&categories, Vec::new())
 }
 
 #[cfg(test)]
@@ -96,9 +26,33 @@ mod tests {
     }
 
     #[test]
-    fn dual_identities_and_arbitrary_source_ids_survive() {
+    fn decimal_coordinates_preserve_original_values() {
+        // Coordinates from 1LMB atom 8 previously failed the synthetic reader roundtrip.
+        let cif = CIF.replace("1 1 2 3 0.5", "1 30.838 -3.361 33.374 0.5");
+        let structure = parse_cif(&cif).unwrap();
+        assert_eq!(structure.atoms[0].position, [30.838, -3.361, 33.374]);
+    }
+
+    #[test]
+    fn case_insensitive_cif_syntax_preserves_identities_and_assembly_values() {
         let cif = "data_test\nloop_\n_atom_site.group_PDB\n_atom_site.id\n_atom_site.type_symbol\n_atom_site.auth_atom_id\n_atom_site.label_atom_id\n_atom_site.auth_comp_id\n_atom_site.label_comp_id\n_atom_site.auth_asym_id\n_atom_site.label_asym_id\n_atom_site.auth_seq_id\n_atom_site.label_seq_id\n_atom_site.pdbx_PDB_ins_code\n_atom_site.label_alt_id\n_atom_site.pdbx_PDB_model_num\n_atom_site.Cartn_x\n_atom_site.Cartn_y\n_atom_site.Cartn_z\n_atom_site.occupancy\nHETATM 'atom long id' C AUTH_CA LABEL_CA MSE MET author_chain_very_long label_chain_very_long '42alpha' 7 B A 2 1 2 3 0.75\n";
-        let structure = parse_cif(cif).unwrap();
+        let cif = cif
+            .replace("data_test", "DATA_test")
+            .replace("loop_", "LOOP_")
+            .replace("_atom_site.", "_AtOm_SiTe.")
+            .replace("Cartn_x", "cartn_x")
+            .replace("Cartn_y", "CARTN_Y");
+        let cif = format!(
+            "{cif}STOP_\n_PdBx_StRuCt_AsSeMbLy.ID BioA\n_PDBX_STRUCT_ASSEMBLY_GEN.Assembly_ID BioA\n_pdbx_struct_assembly_gen.Oper_Expression '(OpA,opA)'\n_pdbx_struct_assembly_gen.Asym_Id_List label_chain_very_long,Label_Chain_Very_Long\n"
+        );
+        let path = std::env::temp_dir().join(format!(
+            "oxillustrate_mixed_case_{}.unknown",
+            std::process::id()
+        ));
+        std::fs::write(&path, &cif).unwrap();
+        let structure = crate::load_structure(&path);
+        std::fs::remove_file(&path).unwrap();
+        let structure = structure.unwrap();
         let atom = &structure.atoms[0];
         assert_eq!(atom.source_id, "atom long id");
         assert_eq!(atom.author_name.as_deref(), Some("AUTH_CA"));
@@ -121,6 +75,14 @@ mod tests {
         assert_eq!(atom.kind, crate::molecular::AtomKind::Polymer);
         assert_eq!(atom.model, 2);
         assert_eq!(atom.occupancy, 0.75);
+        assert_eq!(atom.position, [1.0, 2.0, 3.0]);
+        assert_eq!(structure.assemblies[0].id, "BioA");
+        let generator = &structure.assemblies[0].generators[0];
+        assert_eq!(generator.operation_expression, "(OpA,opA)");
+        assert_eq!(
+            generator.chains,
+            ["label_chain_very_long", "Label_Chain_Very_Long"]
+        );
     }
 
     #[test]

@@ -4,8 +4,8 @@
 
 This is the mathematics and behavior reference for the native Rust Goodsell renderer. It separates executable
 behavior from explanatory prose and identifies source defects instead of silently treating them as
-intended mathematics. Line numbers below refer to the unchanged local
-[illustrate.f](../OTHER_REPOS/Illustrate/illustrate.f). Its executable arithmetic takes precedence over
+intended mathematics. Line numbers below refer to the commit-pinned upstream
+[illustrate.f](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/illustrate.f). Its executable arithmetic takes precedence over
 its comments, the website, and the papers when they disagree. D1, agreed during M1, defines
 deterministic corrections for undefined or out-of-bounds Fortran behavior: initialize the background
 halo and `type(0)`; reset per-pixel and kernel 3/4 contour accumulators; and guard flat-depth fog.
@@ -16,22 +16,23 @@ Exact byte equivalence to undefined Fortran state is not a target.
 The native renderer is a new implementation under [LICENSE.AGPL-3.0](../LICENSE.AGPL-3.0).
 The inspected Fortran is a temporary development oracle and goal reference. After final fidelity
 comparisons, delete its source and compiled copies while preserving images, hashes, commands, and
-scientific provenance. [NOTICE](../NOTICE) records attribution and upstream reference provenance.
+scientific provenance. This specification records scientific attribution and upstream provenance.
 
-The full textual content of these local sources was read:
+The full textual content of these development snapshots was read. Links below identify durable
+upstream sources; local filenames describe the inspected copies, not distribution dependencies:
 
 | Source | Provenance and role |
 | --- | --- |
-| [nihms-1538287.pdf](../LOCAL_ONLY/nihms-1538287.pdf) | Goodsell, Autin, Olson, *Illustrate: Software for Biomolecular Illustration*, Structure 27 (2019), 1716-1720.e1; DOI 10.1016/j.str.2019.08.011. All 12 manuscript pages, including captions and references. Main method authority. |
-| [bioinformatics_36_9_2909.pdf](../LOCAL_ONLY/bioinformatics_36_9_2909.pdf) | Tomasello, Armenia, Molla, *The Protein Imager*, Bioinformatics 36 (2020), 2909-2911; DOI 10.1093/bioinformatics/btaa009. All three pages. Comparison, not Illustrate implementation. |
-| [overview.pdf](../LOCAL_ONLY/overview.pdf) | Ten-page *The Protein Imager* interface supplement; referenced figures, representation table, and complete extracted text read. Comparison only. |
-| [index.html](../LOCAL_ONLY/illustrate_web/index.html) | Saved https://ccsb.scripps.edu/illustrate/ homepage; attribution, history, limitations. |
-| [documentation.html](../LOCAL_ONLY/illustrate_web/documentation.html) | Saved https://ccsb.scripps.edu/illustrate/documentation/; command descriptions and hemoglobin example. |
-| [illustrate.f](../OTHER_REPOS/Illustrate/illustrate.f) | Complete 956-line April 2019 simplified non-photorealistic Fortran program, including both matrix subroutines. |
-| [README.md](../OTHER_REPOS/Illustrate/README.md) | Complete upstream command documentation and attribution. |
-| [LICENSE](../OTHER_REPOS/Illustrate/LICENSE) | Complete upstream Apache-2.0 license. |
-| [2hhb.inp](../OTHER_REPOS/Illustrate/2hhb.inp) | Complete executable sample scene, distinct from illustrative comments. |
-| [2hhb.pdb](../OTHER_REPOS/Illustrate/2hhb.pdb) | Complete 5,613-record file scanned; 4,384 ATOM and 395 HETATM records, chains A-D, identity biological assembly 1. |
+| [nihms-1538287.pdf](https://doi.org/10.1016/j.str.2019.08.011) | Goodsell, Autin, Olson, *Illustrate: Software for Biomolecular Illustration*, Structure 27 (2019), 1716-1720.e1; DOI 10.1016/j.str.2019.08.011. All 12 manuscript pages, including captions and references. Main method authority. |
+| [bioinformatics_36_9_2909.pdf](https://doi.org/10.1093/bioinformatics/btaa009) | Tomasello, Armenia, Molla, *The Protein Imager*, Bioinformatics 36 (2020), 2909-2911; DOI 10.1093/bioinformatics/btaa009. All three pages. Comparison, not Illustrate implementation. |
+| [overview.pdf](https://doi.org/10.1093/bioinformatics/btaa009) | Ten-page *The Protein Imager* interface supplement; referenced figures, representation table, and complete extracted text read. Comparison only. |
+| [index.html](https://ccsb.scripps.edu/illustrate/) | Saved https://ccsb.scripps.edu/illustrate/ homepage; attribution, history, limitations. |
+| [documentation.html](https://ccsb.scripps.edu/illustrate/documentation/) | Saved https://ccsb.scripps.edu/illustrate/documentation/; command descriptions and hemoglobin example. |
+| [illustrate.f](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/illustrate.f) | Complete 956-line April 2019 simplified non-photorealistic Fortran program, including both matrix subroutines. |
+| [README.md](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/README.md) | Complete upstream command documentation and attribution. |
+| [LICENSE](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/LICENSE) | Complete upstream Apache-2.0 license. |
+| [2hhb.inp](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/2hhb.inp) | Complete executable sample scene, distinct from illustrative comments. |
+| [2hhb.pdb](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/2hhb.pdb) | Complete 5,613-record file scanned; 4,384 ATOM and 395 HETATM records, chains A-D, identity biological assembly 1. |
 
 PDF text was extracted without changing sources:
 
@@ -46,7 +47,7 @@ HTML text was extracted with Python's standard `HTMLParser`, excluding scripts/s
 and counted and assembly/header records inspected. Python ran through
 `source source_me.sh && python3`. Text review establishes algorithm content; no claim of visual
 inspection of every PDF illustration is made. The papers contain no additional numerical kernel
-coefficients beyond the Fortran. References remain local and unchanged.
+coefficients beyond the Fortran. Hashes below preserve the identity of the inspected development snapshots.
 
 ### Source identity
 
@@ -332,7 +333,7 @@ kernel, residue threshold, subunit thresholds, centering vector/mode, and radius
 all have initialized defaults. Parenthesized typical values in comments are recommendations,
 not assignments. A native preset must populate every required field explicitly.
 
-The actual [2hhb.inp](../OTHER_REPOS/Illustrate/2hhb.inp) specifies:
+The actual [2hhb.inp](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/2hhb.inp) specifies:
 
 | Setting | Value |
 | --- | --- |
@@ -405,8 +406,8 @@ centering as specified above; the original equation remains documented as legacy
 
 The site requests the scientific citation: Goodsell DS, Autin L, Olson AJ (2019), *Illustrate:
 Software for Biomolecular Illustration*, Structure 27, 1716-1720.e1, DOI
-10.1016/j.str.2019.08.011. Keep this and Goodsell DS, Olson AJ (1992), *Molecular Illustration in
-Black and White*, Journal of Molecular Graphics 10, 235-240, in [NOTICE](../NOTICE).
+[10.1016/j.str.2019.08.011](https://doi.org/10.1016/j.str.2019.08.011). Keep this and Goodsell DS, Olson AJ (1992), *Molecular Illustration in
+Black and White*, Journal of Molecular Graphics 10, 235-240, as scientific attribution here.
 Funding in source: Damon Runyon-Walter Winchell Cancer Research Fund Fellowship
 DRG 972, NIH R01-GM120604, and RCSB Protein Data Bank. The papers/website figures are not relicensed
 by the program's Apache license; use them as references, without bundling their text or images as
@@ -423,3 +424,22 @@ D1 defines initialized halo/`type(0)`, accumulator resets, and flat-depth fog be
 implementation contract must still select safe behavior for empty images, invalid threshold pairs,
 nonpositive dimensions/scales/radii, unsupported assemblies, and repeated calculation. These are
 not defined robustly by the reference. Do not infer additional configurable modes from these gaps.
+
+## Native identity amendment: D10
+
+Native subunit outlines use stable structural chain identity rather than the source's consecutive
+chain-run counter. In hemoglobin, HEM records follow polymer records and repeat author chains A-D;
+source `su` therefore treats each heme as separate from its own protein chain. Native identity
+joins the chain's polymer and hetero atoms. This deliberately removes internal black arcs, with
+no legacy compatibility setting. Matched masks/depth and isolated subunit evidence are recorded in
+[goodsell_fidelity.md](active_plans/reports/goodsell_fidelity.md). Independent visual acceptance is
+separate from this documented mathematical and identity comparison.
+
+
+## Reference lifecycle amendment
+
+The developer oracle can fetch the pinned upstream source and sample coordinates/control cards,
+verifies their recorded SHA-256 hashes, and confines source and executables to an automatically
+removed temporary workspace. A clean native source build does not require ignored local references,
+Fortran, or network retrieval of those sources. Regeneration commands and persistent evidence are
+in [goodsell_oracle.md](active_plans/reports/goodsell_oracle.md).

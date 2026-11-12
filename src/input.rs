@@ -14,6 +14,10 @@ const MAX_INPUT_BYTES: u64 = 1024 * 1024 * 1024;
 ///
 /// Decompressed input is limited to 1 GiB. Recognized content takes precedence over
 /// the filename; extension dispatch handles inputs without a recognizable header.
+///
+/// # Errors
+/// Returns `Error::Io` for file access or read failures and `Error::Parse` for invalid
+/// UTF-8, unsupported or malformed formats, invalid gzip data, or inputs over the limit.
 pub fn load_structure(path: impl AsRef<Path>) -> Result<Structure, Error> {
     let path = path.as_ref();
     let io_error = |source| Error::Io {
@@ -61,9 +65,9 @@ pub fn load_structure(path: impl AsRef<Path>) -> Result<Structure, Error> {
     let extension = base.rsplit('.').next().unwrap_or("");
     if beginning.starts_with('<') {
         xml_input::parse_xml(text)
-    } else if beginning.starts_with("data_")
-        || beginning.starts_with("loop_")
-        || beginning.starts_with('_')
+    } else if beginning.get(..5).is_some_and(|prefix| {
+        prefix.eq_ignore_ascii_case("data_") || prefix.eq_ignore_ascii_case("loop_")
+    }) || beginning.starts_with('_')
     {
         cif_input::parse_cif(text)
     } else {

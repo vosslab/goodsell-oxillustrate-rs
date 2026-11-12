@@ -8,6 +8,7 @@ pub(crate) type Categories = BTreeMap<String, Vec<BTreeMap<String, String>>>;
 
 pub(crate) fn value<'a>(row: &'a BTreeMap<String, String>, key: &str) -> Option<&'a str> {
     row.get(key)
+        .or_else(|| row.get(&key.to_ascii_lowercase()))
         .map(String::as_str)
         .filter(|v| !matches!(*v, "" | "." | "?"))
 }
@@ -69,12 +70,12 @@ pub(crate) fn from_categories(
         if model < 1 {
             return Err(invalid("pdbx_PDB_model_num must be positive".into()));
         }
-        if let Some(group) = value(row, "group_PDB") {
-            if !matches!(group, "ATOM" | "HETATM") {
-                return Err(invalid(format!(
-                    "group_PDB must be ATOM or HETATM, got {group:?}"
-                )));
-            }
+        if let Some(group) = value(row, "group_PDB")
+            && !matches!(group, "ATOM" | "HETATM")
+        {
+            return Err(invalid(format!(
+                "group_PDB must be ATOM or HETATM, got {group:?}"
+            )));
         }
         let label_sequence = value(row, "label_seq_id")
             .map(|v| {

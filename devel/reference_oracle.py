@@ -7,8 +7,45 @@ import shlex
 import shutil
 import hashlib
 import pathlib
-import difflib
 import subprocess
+import tempfile
+import random
+import time
+import urllib.request
+
+
+UPSTREAM_REVISION = 'e469df4f794f8edbca992a9b2ab534d11d27cdd6'
+UPSTREAM_REMOTE = 'https://github.com/ccsb-scripps/Illustrate'
+UPSTREAM_HASHES = {
+	'illustrate.f': '6af0ee0aa2142b72a0fe2655cda371b1ffc17c75f24fb36fab7987fd264fe88b',
+	'2hhb.pdb': 'b2d9a4a3ec1cf16759c2ffc85f1088ef2100e02ececedf20025b9e54d23f3db6',
+	'2hhb.inp': '7439e5f258504193f244e6cf9a7bd11389fce10a62c8faaed10591329c7fce84',
+}
+
+
+#============================================
+def prepare_reference(reference: pathlib.Path, workspace: pathlib.Path) -> list[dict]:
+	"""Copy or fetch only verified pinned inputs into the temporary workspace."""
+	provenance = []
+	for name, expected_hash in UPSTREAM_HASHES.items():
+		url = f'https://raw.githubusercontent.com/ccsb-scripps/Illustrate/{UPSTREAM_REVISION}/{name}'
+		local = reference / name
+		if local.is_file():
+			data = local.read_bytes()
+			origin = 'verified local copy'
+		else:
+			time.sleep(random.random())
+			# ASVS 12.2.1: use HTTPS with urllib's default certificate validation.
+			with urllib.request.urlopen(
+				url, timeout=60,
+			) as response:  # nosec B310: fixed HTTPS constants and allowlisted filenames.
+				data = response.read()
+			origin = 'pinned upstream download'
+		if hashlib.sha256(data).hexdigest() != expected_hash:
+			raise ValueError(f'Pinned upstream SHA-256 mismatch: {name}')
+		(workspace / name).write_bytes(data)
+		provenance.append({'file': name, 'url': url, 'sha256': expected_hash, 'origin': origin})
+	return provenance
 
 
 #============================================
@@ -36,7 +73,7 @@ def deterministic_source(source: str) -> str:
 	"""Apply only recorded initialization, flat fog, and diagnostic changes."""
 	source = ('C Modified development oracle: initialized buffers and scratch,\n'
 		'C guarded flat fog depth, and exported clamped depth/atom diagnostics.\n'
-		'C Upstream rendering formulas otherwise retained; see deterministic.patch.\n' + source)
+		'C Upstream formulas retained; patch recipe: devel/reference_oracle.py.\n' + source)
 	source = replace_once(source, 'type(350000),res', 'type(0:350000),res')
 	source = replace_once(source, '\trscale=1.',
 		'\ttype(0)=0\n\tradius_max=0.\n\tautocenter=0.\n'
@@ -116,28 +153,29 @@ def depth_info(path: pathlib.Path, width: int, height: int) -> dict:
 
 
 #============================================
-def main() -> None:
-	root = pathlib.Path(run(['git', 'rev-parse', '--show-toplevel'], pathlib.Path.cwd()).strip())
-	reference = root / 'OTHER_REPOS/Illustrate'
-	output = root / 'output_oracle'
+def generate(root: pathlib.Path, output: pathlib.Path, reference: pathlib.Path,
+	provenance: list[dict]) -> None:
+	"""Render persistent evidence with sources and executables confined to reference."""
 	output.mkdir(exist_ok=True)
 	source_path = reference / 'illustrate.f'
 	source = source_path.read_text()
 	patched = deterministic_source(source)
-	(output / 'illustrate_deterministic.f').write_text(patched)
-	(output / 'deterministic.patch').write_text(''.join(difflib.unified_diff(
-		source.splitlines(True), patched.splitlines(True), 'illustrate.f', 'illustrate_deterministic.f')))
+	(reference / 'illustrate_deterministic.f').write_text(patched)
 	compiler = shutil.which('gfortran')
 	if compiler is None:
 		raise RuntimeError('gfortran is required only to regenerate the development oracle')
 	manifest = {'compiler': run([compiler, '--version'], root).splitlines()[0],
-		'upstream_revision': run(['git', 'rev-parse', 'HEAD'], reference).strip(),
-		'upstream_remote': run(['git', 'remote', 'get-url', 'origin'], reference).strip(),
+		'upstream_revision': UPSTREAM_REVISION, 'upstream_remote': UPSTREAM_REMOTE,
+		'upstream_files': provenance,
 		'source_sha256': digest(source_path), 'deterministic_sha256':
-		digest(output / 'illustrate_deterministic.f'), 'commands': [], 'renders': []}
+		digest(reference / 'illustrate_deterministic.f'),
+		'command_lifecycle': 'Recorded commands use temporary paths deleted after regeneration; '
+			'regenerate with ./devel/run_reference_oracle.sh.',
+		'commands': [], 'renders': []}
 	for variant, input_source in [('original', source_path),
-		('deterministic', output / 'illustrate_deterministic.f')]:
-		command = [compiler, '-O0', '-std=legacy', str(input_source), '-o', str(output / f'illustrate_{variant}')]
+		('deterministic', reference / 'illustrate_deterministic.f')]:
+		command = [compiler, '-O0', '-std=legacy', str(input_source), '-o',
+			str(reference / f'illustrate_{variant}')]
 		manifest['commands'].append(shlex.join(command))
 		(output / f'{variant}_compile.log').write_text(run(command, root))
 	disabled = '100000.,100001.'
@@ -161,13 +199,26 @@ def main() -> None:
 	scenes['edge'] = scenes['combined'].replace('center\nauto\n',
 		'center\nauto\ntrans\n5.,7.,0.\n')
 	scenes['hemoglobin'] = (reference / '2hhb.inp').read_text().replace('2hhb.pnm', 'image.pnm')
+	for part in ['plain', 'shadow', 'contour', 'subunit', 'residue']:
+		lines = scenes['hemoglobin'].splitlines()
+		illustrate = lines.index('illustrate')
+		if part != 'contour':
+			lines[illustrate + 1] = '100000.,100001.,4,0.,5.'
+		if part != 'subunit':
+			lines[illustrate + 2] = '100000.,100001.'
+		if part != 'residue':
+			lines[illustrate + 3] = '100000.,100001.,6000.'
+		if part != 'shadow':
+			world = lines.index('wor')
+			lines[world + 2] = '0,.0023,2.,1.,.2'
+		scenes[f'hemoglobin_{part}'] = '\n'.join(lines) + '\n'
 	for variant in ('original', 'deterministic'):
 		for name, controls in scenes.items():
 			directory = output / variant / name
 			# Executables use separate names so their scene directory can stay predictable.
 			directory.mkdir(parents=True, exist_ok=True)
 			(directory / 'commands.inp').write_text(controls)
-			if name == 'hemoglobin':
+			if name.startswith('hemoglobin'):
 				shutil.copyfile(reference / '2hhb.pdb', directory / '2hhb.pdb')
 			else:
 				pdb = scene_pdb()
@@ -177,7 +228,7 @@ def main() -> None:
 			previous = None
 			for repetition in range(2):
 				with (directory / 'commands.inp').open() as stream:
-					result = subprocess.run([str(output / f'illustrate_{variant}')],
+					result = subprocess.run([str(reference / f'illustrate_{variant}')],
 						cwd=directory, stdin=stream, capture_output=True, text=True, check=True)
 				(directory / f'run_{repetition + 1}.log').write_text(result.stdout + result.stderr)
 				info = ppm_info(directory / 'image.pnm')
@@ -187,7 +238,8 @@ def main() -> None:
 				if previous is not None and current != previous:
 					raise RuntimeError(f'Nonrepeatable render: {variant}/{name}')
 				previous = current
-			command_text = f'cd {directory.relative_to(root)} && ../../illustrate_{variant} < commands.inp'
+			command_text = (f'cd {shlex.quote(str(directory))} && '
+				f'{shlex.quote(str(reference / f"illustrate_{variant}"))} < commands.inp')
 			manifest['commands'].append(command_text)
 			geometry = None
 			if variant == 'deterministic':
@@ -195,12 +247,45 @@ def main() -> None:
 			manifest['renders'].append({'variant': variant, 'scene': name, **info,
 				'opacity_sha256': current[1], 'repeat_identical': True,
 				'controls_sha256': digest(directory / 'commands.inp'),
-				'input_sha256': digest(directory / ('2hhb.pdb' if name == 'hemoglobin'
+				'input_sha256': digest(directory / ('2hhb.pdb' if name.startswith('hemoglobin')
 					else 'scene.pdb')),
 				'depth_atom_sha256': current[2] if variant == 'deterministic' else None,
 				'geometry': geometry})
 	(output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 	print(f'Validated {len(manifest["renders"])} repeatable renders: {output}')
+
+
+#============================================
+def regenerate(root: pathlib.Path, output: pathlib.Path, reference: pathlib.Path) -> None:
+	"""Stage validated evidence before replacing the accepted output directory."""
+	with tempfile.TemporaryDirectory(prefix='illustrate_oracle_') as temporary:
+		workspace = pathlib.Path(temporary)
+		provenance = prepare_reference(reference, workspace)
+		with tempfile.TemporaryDirectory(prefix=f'{output.name}_stage_', dir=output.parent) as staging:
+			staged_output = pathlib.Path(staging) / output.name
+			generate(root, staged_output, workspace, provenance)
+			contact_sheet = output / 'spheres.webp'
+			if contact_sheet.is_file():
+				shutil.copyfile(contact_sheet, staged_output / contact_sheet.name)
+			# Keep backup outside automatic cleanup so failed rollback cannot erase it.
+			backup = pathlib.Path(staging + '.previous')
+			had_output = output.exists()
+			if had_output:
+				output.rename(backup)
+			try:
+				staged_output.rename(output)
+			except OSError:
+				if had_output:
+					backup.rename(output)
+				raise
+			if had_output:
+				shutil.rmtree(backup)
+
+
+#============================================
+def main() -> None:
+	root = pathlib.Path(run(['git', 'rev-parse', '--show-toplevel'], pathlib.Path.cwd()).strip())
+	regenerate(root, root / 'output_oracle', root / 'OTHER_REPOS/Illustrate')
 
 
 if __name__ == '__main__':

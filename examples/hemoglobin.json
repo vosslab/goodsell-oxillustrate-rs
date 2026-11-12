@@ -1,0 +1,303 @@
+{
+  "width": 922,
+  "height": 750,
+  "orientation": [
+    0,
+    0,
+    90
+  ],
+  "framing": {
+    "scale": 12,
+    "margin": 30
+  },
+  "background": [
+    1,
+    1,
+    1
+  ],
+  "fog": {
+    "color": [
+      1,
+      1,
+      1
+    ],
+    "front": 1,
+    "back": 1
+  },
+  "shadows": {
+    "enabled": true,
+    "decrement": 0.0023,
+    "slope": 2,
+    "threshold": 1,
+    "brightness_floor": 0.2
+  },
+  "outlines": {
+    "contour_enabled": true,
+    "subunit_enabled": true,
+    "residue_enabled": true,
+    "contour": {
+      "low": 3,
+      "high": 10
+    },
+    "subunit": {
+      "low": 3,
+      "high": 10
+    },
+    "residue": {
+      "low": 3,
+      "high": 8
+    },
+    "kernel": 4,
+    "depth_min": 0,
+    "depth_max": 5,
+    "residue_difference": 6000
+  },
+  "atom_rules": [
+    {
+      "selector": {
+        "kind": "water",
+        "residue_name": "HOH",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "omit": true
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "element": "H",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "omit": true
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "element": "D",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "omit": true
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "chain": {
+          "id": "A"
+        },
+        "element": "C",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.6,
+        0.6
+      ],
+      "radius": 1.6
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "chain": {
+          "id": "A"
+        },
+        "element": "S",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.5,
+        0.5
+      ],
+      "radius": 1.8
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "chain": {
+          "id": "A"
+        },
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.5,
+        0.5
+      ],
+      "radius": 1.5
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "chain": {
+          "id": "C"
+        },
+        "element": "C",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.6,
+        0.6
+      ],
+      "radius": 1.6
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "chain": {
+          "id": "C"
+        },
+        "element": "S",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.5,
+        0.5
+      ],
+      "radius": 1.8
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "chain": {
+          "id": "C"
+        },
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.5,
+        0.5
+      ],
+      "radius": 1.5
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "element": "C",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.8,
+        0.6
+      ],
+      "radius": 1.6
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "element": "S",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.7,
+        0.5
+      ],
+      "radius": 1.8
+    },
+    {
+      "selector": {
+        "kind": "polymer",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.7,
+        0.5
+      ],
+      "radius": 1.5
+    },
+    {
+      "selector": {
+        "kind": "hetero",
+        "residue_name": "HEM",
+        "element": "FE",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.8,
+        0
+      ],
+      "radius": 1.8
+    },
+    {
+      "selector": {
+        "kind": "hetero",
+        "residue_name": "HEM",
+        "element": "C",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.3,
+        0.3
+      ],
+      "radius": 1.6
+    },
+    {
+      "selector": {
+        "kind": "hetero",
+        "residue_name": "HEM",
+        "residue_range": {
+          "start": 0,
+          "end": 9999
+        }
+      },
+      "color": [
+        1,
+        0.1,
+        0.1
+      ],
+      "radius": 1.5
+    },
+    {
+      "selector": {},
+      "omit": true
+    }
+  ]
+}

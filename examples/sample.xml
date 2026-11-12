@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<datablock datablockName="synthetic_geometry">
+  <atom_siteCategory>
+    <atom_site id="1">
+      <group_PDB>ATOM</group_PDB><type_symbol>C</type_symbol>
+      <label_atom_id>CA</label_atom_id><label_comp_id>GLY</label_comp_id>
+      <label_asym_id>A</label_asym_id><label_seq_id>1</label_seq_id>
+      <auth_asym_id>A</auth_asym_id><auth_seq_id>1</auth_seq_id>
+      <Cartn_x>-2</Cartn_x><Cartn_y>-2</Cartn_y><Cartn_z>-4</Cartn_z>
+      <occupancy>1</occupancy><B_iso_or_equiv>20</B_iso_or_equiv><pdbx_PDB_model_num>1</pdbx_PDB_model_num>
+    </atom_site>
+    <atom_site id="2">
+      <group_PDB>ATOM</group_PDB><type_symbol>N</type_symbol>
+      <label_atom_id>N</label_atom_id><label_comp_id>GLY</label_comp_id>
+      <label_asym_id>A</label_asym_id><label_seq_id>2</label_seq_id>
+      <auth_asym_id>A</auth_asym_id><auth_seq_id>2</auth_seq_id>
+      <Cartn_x>0</Cartn_x><Cartn_y>0</Cartn_y><Cartn_z>-3</Cartn_z>
+      <occupancy>1</occupancy><B_iso_or_equiv>20</B_iso_or_equiv><pdbx_PDB_model_num>1</pdbx_PDB_model_num>
+    </atom_site>
+    <atom_site id="3">
+      <group_PDB>ATOM</group_PDB><type_symbol>O</type_symbol>
+      <label_atom_id>O</label_atom_id><label_comp_id>GLY</label_comp_id>
+      <label_asym_id>B</label_asym_id><label_seq_id>1</label_seq_id>
+      <auth_asym_id>B</auth_asym_id><auth_seq_id>1</auth_seq_id>
+      <Cartn_x>2</Cartn_x><Cartn_y>1</Cartn_y><Cartn_z>-1</Cartn_z>
+      <occupancy>1</occupancy><B_iso_or_equiv>20</B_iso_or_equiv><pdbx_PDB_model_num>1</pdbx_PDB_model_num>
+    </atom_site>
+    <atom_site id="4">
+      <group_PDB>ATOM</group_PDB><type_symbol>S</type_symbol>
+      <label_atom_id>SG</label_atom_id><label_comp_id>CYS</label_comp_id>
+      <label_asym_id>B</label_asym_id><label_seq_id>3</label_seq_id>
+      <auth_asym_id>B</auth_asym_id><auth_seq_id>3</auth_seq_id>
+      <Cartn_x>-2</Cartn_x><Cartn_y>3</Cartn_y><Cartn_z>-6</Cartn_z>
+      <occupancy>1</occupancy><B_iso_or_equiv>20</B_iso_or_equiv><pdbx_PDB_model_num>1</pdbx_PDB_model_num>
+    </atom_site>
+  </atom_siteCategory>
+</datablock>

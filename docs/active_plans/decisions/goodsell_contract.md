@@ -2,12 +2,14 @@
 
 ## Ownership and public boundary
 
-The standalone package [Cargo.toml](../../../oxillustrate/Cargo.toml) builds library `oxillustrate`
+The standalone root package [Cargo.toml](../../../Cargo.toml) builds library `oxillustrate`
 and binary `illustrate`, using Rust 2024 and toolchain floor 1.99.1. Safe synchronous Rust is
 required. Private modules expose owned domain types through `lib.rs` re-exports. Parser library
 objects never escape adapters. `load_structure`, `prepare_scene`, and `render` are the intended
 three operations; M3 defines their data contracts, while later work implements and wires them.
 The initial binary provides help/version and rejects unknown arguments; it does not render yet.
+Its manifest and lockfile live at the repository root, with Rust modules in `src/` and generated
+build artifacts in `target/`. Run Cargo commands directly from the repository root.
 
 ## Molecular data
 
@@ -78,10 +80,17 @@ when necessary. Save raw occupied extrema before clamping surface depth to zero 
 `RenderedImage` contains width, height, and top-to-bottom row-major RGB bytes.
 
 Checked dimension multiplication rejects more than 16,777,216 pixels (approximately 400 MiB of
-scratch at the planned buffers). Every actual allocation still uses fallible reservation and
-checked byte arithmetic. `Error` distinguishes contextual file I/O, format parsing, invalid
+scratch at the planned buffers). Image-sized raster and RGB buffers and prepared sphere vectors
+use fallible reservation with checked sizing; ordinary Rust collections, parser and PNG library
+allocations do not promise recoverable process-wide out-of-memory handling. `Error` distinguishes
+contextual file I/O, format parsing, invalid
 settings/selections, empty scenes, allocation failure, and image encoding; error causes remain
 available through standard error sources without exposing dependency-specific types.
+
+M12 measured rasterization at 2.9-7.3% of public render time on the tested 800 x 800 workloads.
+The current raster visits each prepared sphere once; persistent tile binning and threading are
+deferred until measured benefit justifies their complexity. This does not add a performance promise
+or arbitrary-input allocation guarantee.
 
 ## Dependency refresh evidence
 

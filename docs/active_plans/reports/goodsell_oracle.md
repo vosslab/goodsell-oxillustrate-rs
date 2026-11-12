@@ -2,7 +2,7 @@
 
 ## Outcome and reproduction
 
-M2 produces original Fortran and explicitly corrected deterministic references in
+M2 produces images/maps from original Fortran and explicitly corrected deterministic references in
 `output_oracle/`. Run from the repository:
 
 ```bash
@@ -12,46 +12,55 @@ M2 produces original Fortran and explicitly corrected deterministic references i
 [run_reference_oracle.sh](../../../devel/run_reference_oracle.sh) only establishes the repository
 and Python environment (`source source_me.sh`); functional work lives in
 [reference_oracle.py](../../../devel/reference_oracle.py). The script compiles and renders supplied
-hemoglobin plus 13 small scenes, twice each, in isolated directories. Each run checks complete P3
+hemoglobin, 13 small scenes, and five isolated hemoglobin references, twice each in both source
+variants, in isolated directories. Each run checks complete P3
 images, channel ranges, and repeated image/opacity hashes. The deterministic runs also check repeated
 depth/atom hashes, map dimensions, finite nonpositive depths, atom IDs, and occupied pixels.
 Fortran is a development oracle dependency; the native renderer has no Fortran runtime requirement.
 
-The generator uses only Python's standard library and an installed `gfortran`. This run uses
+The generator uses only Python's standard library and an installed `gfortran`. Missing reference
+inputs are fetched over HTTPS from the pinned revision and checked against fixed SHA-256 values.
+Source files and both compiled executables live in an automatically removed temporary directory;
+only coordinate data, control cards, logs, maps, images, and manifests persist. This run uses
 `GNU Fortran (Homebrew GCC 16.2.0) 16.2.0`, compiling with `-O0 -std=legacy`. It uses argument vectors
 without a shell for compiler and renderer calls (ASVS 1.2.5). It overwrites the same named generated
 artifacts on reruns. The repository's `/output*/` ignore rule keeps the large evidence out of Git.
 
 ## Source and attribution
 
-The untouched source is `OTHER_REPOS/Illustrate/illustrate.f`, from
-`git@github.com:ccsb-scripps/Illustrate.git`, revision
-`e469df4f794f8edbca992a9b2ab534d11d27cdd6`.
+The untouched source is the commit-pinned upstream
+[illustrate.f](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/illustrate.f), revision
+`e469df4f794f8edbca992a9b2ab534d11d27cdd6`. The original development copy lived in
+ignored `OTHER_REPOS/Illustrate/`; that directory is not a native build dependency.
 
 ```text
 SHA-256 illustrate.f:
 6af0ee0aa2142b72a0fe2655cda371b1ffc17c75f24fb36fab7987fd264fe88b
 SHA-256 2hhb.pdb:
 b2d9a4a3ec1cf16759c2ffc85f1088ef2100e02ececedf20025b9e54d23f3db6
-SHA-256 upstream Apache license / root LICENSE.Apache-2.0:
+SHA-256 upstream Apache license:
 c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
 ```
 
-[LICENSE.Apache-2.0](../../../LICENSE.Apache-2.0) is a byte-for-byte copy of the complete upstream
-Apache-2.0 license. [NOTICE](../../../NOTICE) retains David S Goodsell's 2019 copyright, upstream
-project/revision, funding acknowledgment, and scientific citations. Existing AGPL-3.0 and CC-BY-4.0
-files remain intact; the repository license map identifies their respective covered material.
+The upstream [LICENSE](https://raw.githubusercontent.com/ccsb-scripps/Illustrate/e469df4f794f8edbca992a9b2ab534d11d27cdd6/LICENSE) records Apache-2.0 for the historical
+Fortran source, copyright 2019 David S Goodsell. Native Rust source uses
+[LICENSE.AGPL-3.0](../../../LICENSE.AGPL-3.0); documentation and non-code materials use
+[LICENSE.CC-BY-4.0](../../../LICENSE.CC-BY-4.0). Scientific attribution is in
+[REFERENCE_SPEC.md](../../REFERENCE_SPEC.md), including Goodsell, Autin, and Olson (2019),
+[DOI 10.1016/j.str.2019.08.011](https://doi.org/10.1016/j.str.2019.08.011).
 The source, input, implementation, and algorithm boundaries are documented in
 [REFERENCE_SPEC.md](../../REFERENCE_SPEC.md). No website or paper illustration is redistributed.
 
 ## Original and deterministic variants
 
-`output_oracle/illustrate_original` compiles the unchanged upstream source. Its output is a
-platform/compiler observation, including undefined behavior, rather than a portable pixel contract.
-`output_oracle/illustrate_deterministic.f` retains upstream notices and adds a prominent modification
-notice. `output_oracle/deterministic.patch` records every source change. Text decoding normalizes
-upstream CRLF into LF in the copied variant; the original byte hash above remains the provenance.
-
+The original executable compiles unchanged upstream source in a temporary directory. Its output
+is a platform/compiler observation, including undefined behavior, rather than a portable pixel
+contract. The deterministic source retains upstream notices and a prominent modification notice;
+the patch recipe lives in [reference_oracle.py](../../../devel/reference_oracle.py). Text decoding
+normalizes upstream CRLF into LF in that temporary variant; the original byte hash above remains
+the provenance. Sources and executables are removed on success or exception. Manifest commands
+retain their temporary paths as evidence; regenerate with the wrapper rather than replaying those
+expired paths.
 The deterministic changes implement agreed D1:
 
 - Extend `type` to include index zero and initialize background `type(0)=0`.
@@ -66,7 +75,12 @@ The deterministic changes implement agreed D1:
 - Log raw pre-clamp depth extrema and export clamped depth/atom maps before shading.
 
 The final corrected source SHA-256 is
-`ba605987419b55145961990fd0b3844a251351cfd841b8aaba56fac7dca0f90f`.
+`c84e2bf5854d06d4baf982e7b56fac440e3f72e314a69587af802ede4881f69e`.
+Only the leading modification comment changed from the initial M2 variant hash
+`ba605987419b55145961990fd0b3844a251351cfd841b8aaba56fac7dca0f90f`:
+it points to the retained Python patch recipe instead of an unretained patch file. All 28 render
+records remain identical. Both pinned-download and verified-local regeneration pass; see
+[goodsell_oracle_lifecycle.md](goodsell_oracle_lifecycle.md).
 
 Original and corrected outputs differ in contour 3/4, identity outlines at the allocated halo,
 flat fog, combined scenes, and hemoglobin. The original programs repeat identically on this machine,
@@ -147,13 +161,21 @@ uncapped occupied depths -20.2000103 through +7.79999924, followed by capped fog
 The flat fixture has exactly one occupied pixel at -8.99999905. All 14 deterministic scenes also
 pass the bounds/FPE-trap build below, and Pyflakes reports no issues.
 
+That 28-record result is the original M2 snapshot and remains preserved as historical evidence.
+Current regeneration produces 38 records: 19 scenes in each source variant, each rendered twice.
+The five additional isolated hemoglobin references are covered by current launcher/verifier
+lifecycle checks, but the historical 14-scene bounds/FPE run was not repeated for those additions.
+See [goodsell_oracle_lifecycle.md](goodsell_oracle_lifecycle.md) for the current 38-record check.
+
 The unmodified and deterministic hemoglobin and the small-scene contact sheet were rendered and
 visually inspected. Disposable quality-90 WebP views are `output_oracle/spheres.webp` and
 `output_oracle/{original,deterministic}/hemoglobin/image.webp`; the measured references are the
 original P3 images, not lossy previews. Previews use locally installed Pillow as a one-time viewing
 aid; it is not a generator dependency. `cwebp` cannot read the original textual P3 files directly.
 
-An additional deterministic build was run over every scene with bounds and arithmetic traps:
+The initial M2 snapshot also ran a deterministic build over every scene with bounds and arithmetic
+traps. The following historical commands refer to temporary development files, not files required
+by a current checkout or retained by regeneration:
 
 ```bash
 gfortran -O0 -std=legacy -fcheck=all -ffpe-trap=invalid,zero,overflow \
@@ -167,4 +189,4 @@ source source_me.sh && python3 -m pyflakes devel/reference_oracle.py
 These checks validate finite deterministic outputs and allocated-buffer bounds for these inputs.
 They do not establish arbitrary-input safety or cross-compiler reproducibility. Larger radii,
 malformed control cards, unsupported assemblies, empty scenes and repeated calculate commands are
-outside this oracle suite. Native comparison is a separate M8 result.
+outside this oracle suite. Native comparison is recorded separately in [goodsell_fidelity.md](goodsell_fidelity.md).
