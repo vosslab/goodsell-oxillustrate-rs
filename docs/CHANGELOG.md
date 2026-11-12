@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-11-12
+
+### Fixes and Maintenance
+
+- Trace the collection failure to the archived plan's missing old path in the Git index.
+  The current index lists the existing archive path. The initial vendored helper override
+  is subsequently removed as recorded below.
+- Correct current README, installation, and validation documentation to use local checks.
+  Record the user's workflow and vendored-file ownership guidance, and append a dated
+  correction to the historical plan.
+- Audit the benchmark downloader's fixed HTTPS RCSB URL and two hardcoded structure IDs;
+  document the narrow Bandit B310 exception without changing download behavior.
+- Synchronized shared style guides, tests, and repository support files from the starter template.
+
+### Removals and Deprecations
+
+- The agent-added GitHub Actions workflow is removed; the user does not use GitHub workflows.
+- Remove the added regression test for the local vendored helper override. The helper now
+  matches its tracked version; no local vendored helper changes remain.
+
+### Decisions and Failures
+
+- Treating the plan's generic native-CI wording as a request for GitHub Actions was an agent
+  assumption. The user's local workflow takes precedence.
+- The earlier collection fix changed the vendored helper to check file existence before
+  invoking content-reading callbacks. It also modified master files in starter-repo-template
+  without user authorization: its `tests/file_utils.py`, `tests/meta/test_file_utils_discovery.py`,
+  and `docs/CHANGELOG.md`. No further edits to that repository are made during this correction.
+
+### Developer Tests and Notes
+
+- After the workflow cleanup and removal of the local vendored override, the exact
+  `source source_me.sh && pytest tests/` command passes: 945 tests. No Rust code changed;
+  Rust checks were not repeated. The master template's current state was not inspected again.
+- Initially add a regression covering a tracked deletion with a content-reading callback;
+  confirm the existing file is selected. This test is removed with the local vendored override.
+- Reproduce the regression's original `FileNotFoundError`, then verify the fix with the exact
+  `source source_me.sh && pytest tests/` command: 946 passed. The tracked-file set was larger
+  than during the earlier 837-test implementation run; audit the newly included benchmark
+  download call as part of the full run.
+
 ## 2026-11-11
 
 ### Additions and New Features

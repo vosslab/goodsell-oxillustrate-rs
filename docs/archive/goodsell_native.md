@@ -169,3 +169,10 @@ whitespace, and README-first-paragraph checks pass: 226 tests. `git diff --check
 quality-90 README proof asset remains present at
 [hemoglobin.webp](../screenshots/hemoglobin.webp). Archival preserves the plan's exact bytes
 before and after `git mv`; only the authorized closure/evidence text and relative links changed.
+
+## User workflow correction: 2026-11-12
+
+The user does not use GitHub workflows. This supersedes the original native-CI wording above;
+the agent-added workflow was removed. Use the local commands in [INSTALL.md](../INSTALL.md)
+and retain the recorded platform evidence. Repository work does not authorize edits to master
+vendored files in other repositories. See [HUMAN_GUIDANCE.md](../HUMAN_GUIDANCE.md).

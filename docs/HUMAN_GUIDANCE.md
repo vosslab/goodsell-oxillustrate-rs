@@ -8,6 +8,11 @@ origin belongs there too. Rules: [REPO_STYLE.md](REPO_STYLE.md).
 [PROPAGATED HEADER - ENTRIES BELOW ARE YOURS]
 <!-- VENDORED HEADER: END -->
 
+- 2026-11-12: I do not use GitHub workflows. Use the repository's local verification commands.
+
+- 2026-11-12: Respect vendored-file ownership. Repository work does not authorize editing
+  master vendored files in another repository.
+
 - 2026-11-11: Reimplement the code using [LICENSE.AGPL-3.0](../LICENSE.AGPL-3.0).
   The old code is barely usable and serves only as an implementation and goal reference;
   delete it when the new implementation and comparisons are done.

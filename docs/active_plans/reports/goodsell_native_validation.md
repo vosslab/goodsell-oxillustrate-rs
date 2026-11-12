@@ -2,26 +2,12 @@
 
 Validation date: 2026-11-11. Package: root `oxillustrate` 26.11.0.
 
-## CI coverage
+## Local verification
 
-The workflow in [native.yml](../../../.github/workflows/native.yml) runs stable
-Rust formatting, locked all-target compilation, tests, and all-target Clippy with
-warnings denied. It installs the CLI into the runner's temporary directory, then
-renders `examples/sample.pdb` at 320 by 240 pixels from outside the source tree.
-No Fortran compiler, reference checkout, or legacy executable is needed.
-
-The matrix uses `macos-15` (arm64) and `ubuntu-24.04` (x64), verified against
-[GitHub's runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
-`actions/checkout@v7` was selected after checking the current official release,
-[v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1).
-The stable toolchain and component syntax follow
-[dtolnay/rust-toolchain](https://github.com/dtolnay/rust-toolchain).
-These labels and action references were checked live on the validation date.
-
-No remote workflow was triggered. These are configured gates, not a claim of a
-successful GitHub Actions run. A failing gate blocks merge: fix the corresponding
-format, build, test, lint, installation, or render failure and rerun both jobs;
-do not disable a gate or skip a platform to obtain a passing result.
+Correction, 2026-11-12: the user does not use GitHub workflows. The agent-added
+workflow was removed. The local commands in [INSTALL.md](../../INSTALL.md) and
+the platform evidence below remain the verification route. No hosted workflow ran.
+No Fortran compiler, reference checkout, or legacy executable is needed for native checks.
 
 ## Local macOS arm64
 
@@ -133,11 +119,10 @@ Logs: `output_native/logs/linux_cross_validation.log` and
 `output_native/logs/linux_cross_final.log`. Both retained source snapshots matched `src/`,
 manifest, and lockfile at validation time. The current tree later added public rustdoc comments in
 nine source files; those documentation-only changes do not alter the tested implementation. Final
-macOS checks were refreshed against the current tree. Physical Linux x86_64 execution and remote CI
-remain unobserved.
+macOS checks were refreshed against the current tree. Physical Linux x86_64 execution
+remains unobserved.
 
 This proves a Linux x86_64 cross-build and actual emulated test/CLI execution.
-It does not prove execution on physical x86_64 hardware. The configured
-`ubuntu-24.04` CI job runs that target natively, but its execution has not been
-observed in this session. The containerized GCC is test tooling only; native
+It does not prove execution on physical x86_64 hardware.
+The containerized GCC is test tooling only; native
 application users need no Fortran toolchain.

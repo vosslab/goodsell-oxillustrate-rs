@@ -67,15 +67,15 @@ See [docs/USAGE.md](docs/USAGE.md) for scene fields, model and assembly selectio
 
 Independent visual review accepts the checked reference scenes, and all 19 reference/native
 silhouette masks match. Clean-source macOS arm64 and emulated Linux x86_64 build, test,
-installation, and rendering checks pass. Physical x86_64 execution and remote CI have not been
-tested; platform details are in [docs/INSTALL.md](docs/INSTALL.md).
+installation, and rendering checks pass. Physical x86_64 execution has not been tested;
+platform details and local verification commands are in [docs/INSTALL.md](docs/INSTALL.md).
 
 - [docs/REFERENCE_SPEC.md](docs/REFERENCE_SPEC.md): reference mathematics and deliberate corrections.
 - [docs/CHANGELOG.md](docs/CHANGELOG.md): implementation and verification history.
 - [docs/active_plans/reports/goodsell_fidelity.md](docs/active_plans/reports/goodsell_fidelity.md):
   measured source comparisons and protein/DNA/virus assembly rendering.
 - [docs/active_plans/reports/goodsell_native_validation.md](docs/active_plans/reports/goodsell_native_validation.md):
-  clean-source installation, target execution, and CI evidence boundaries.
+  clean-source installation, target execution, and verification limits.
 
 ## Scope and attribution
 

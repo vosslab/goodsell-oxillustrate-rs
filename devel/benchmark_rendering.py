@@ -31,7 +31,7 @@ def main() -> None:
 		url = f'https://files.rcsb.org/download/{identifier.upper()}.cif'
 		if not path.exists():
 			time.sleep(random.random())
-			with urllib.request.urlopen(url, timeout=60) as response:
+			with urllib.request.urlopen(url, timeout=60) as response:  # nosec B310: fixed HTTPS URL.
 				path.write_bytes(response.read())
 	for name, input_path, assembly in [
 		('hemoglobin', root / 'output_oracle/deterministic/hemoglobin/2hhb.pdb', None),

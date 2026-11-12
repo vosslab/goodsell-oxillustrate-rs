@@ -18,7 +18,7 @@ This ledger tracks the approved work in [goodsell_native.md](../../archive/goods
 | M10 | outlines | accepted | M8 | Outlines passed fresh SPEC and QUALITY review. |
 | M11 | native_cli | accepted | M9, M10 | CLI/rendering passed fresh SPEC and QUALITY review; three integration tests and 922 x 750 hemoglobin output are recorded. |
 | M12 | render_evidence | accepted | M11 | All 19 masks match; 13 small scenes match atom ownership, with at most 1 byte RGB differences; hemoglobin D10 and one precision-tie pixel are attributed. Independent visual assessment passes. Benchmarks and D12 refinement are recorded; fresh SPEC/QUALITY reviews and final integration ACCEPT confirm current module/probe hashes. |
-| M13 | release_docs / native_ci | accepted | M12 | Public docs, native platform evidence, cleanup, and final integration ACCEPT complete closure. macOS arm64 and emulated Linux x86_64 checks pass; physical x86_64 and remote CI remain unobserved. [goodsell_integration_review.md](../reports/goodsell_integration_review.md), [goodsell_cleanup.md](../reports/goodsell_cleanup.md). |
+| M13 | release_docs / native_validation | accepted | M12 | Public docs, local native platform evidence, cleanup, and final integration ACCEPT complete closure. macOS arm64 and emulated Linux x86_64 checks pass; physical x86_64 remains unobserved. GitHub workflows were removed following the user's 2026-11-12 correction. [goodsell_integration_review.md](../reports/goodsell_integration_review.md), [goodsell_cleanup.md](../reports/goodsell_cleanup.md). |
 
 ## Decisions
 

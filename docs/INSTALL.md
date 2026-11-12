@@ -35,13 +35,19 @@ For a complete render, follow [USAGE.md](USAGE.md).
 
 ```bash
 cargo fmt --check
+cargo check --all-targets --locked
 cargo test --locked
 cargo clippy --all-targets --locked -- -D warnings
 cargo doc --no-deps --locked
 ```
 
-Rust API documentation is generated under `target/doc/oxillustrate/`. Python repository checks use
-`source source_me.sh && python3`; Python is development tooling, not a renderer dependency.
+Rust API documentation is generated under `target/doc/oxillustrate/`. Run repository checks locally:
+
+```bash
+source source_me.sh && pytest tests/
+```
+
+Python is development tooling, not a renderer dependency.
 
 ## Verification status
 
@@ -50,8 +56,8 @@ rendering pass. Linux x86_64 cross-build, tests, installation, and actual emulat
 also pass; the sample PNG is byte-identical across those executions. The source snapshots use
 cached dependencies and fresh build targets, without legacy reference files.
 
-Physical x86_64 Linux and remote GitHub Actions execution were not observed. Direct x86_64 Rust
+Physical x86_64 Linux execution was not observed. Direct x86_64 Rust
 compiler execution failed under QEMU; the successful fallback cross-compiled using an arm64 Linux
 compiler and ran the resulting x86_64 tests/executable under emulation. See
 [goodsell_native_validation.md](active_plans/reports/goodsell_native_validation.md) for commands,
-hashes, logs, and the configured CI matrix.
+hashes, logs, and verification limits.
