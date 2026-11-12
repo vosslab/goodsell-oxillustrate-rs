@@ -164,7 +164,7 @@ mod tests {
             width: 9,
             height: 9,
             spheres: vec![sphere.clone(), sphere],
-            background: [1.0; 3],
+            background: Some([1.0; 3]),
             fog: FogSettings::default(),
             shadows: ShadowSettings::default(),
             outlines: OutlineSettings {

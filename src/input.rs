@@ -8,7 +8,7 @@ use flate2::read::MultiGzDecoder;
 use crate::{Error, Structure, cif_input, pdb_input, xml_input};
 
 // A generous macromolecular text limit also bounds decompression of untrusted gzip files.
-const MAX_INPUT_BYTES: u64 = 1024 * 1024 * 1024;
+pub(crate) const MAX_INPUT_BYTES: u64 = 1024 * 1024 * 1024;
 
 /// Load PDB, mmCIF, or PDBML coordinates, optionally gzip compressed.
 ///

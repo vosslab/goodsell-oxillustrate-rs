@@ -62,7 +62,8 @@ with owned `Structure`, `Scene`, and `RenderedImage` values. The CLI calls the s
 **Why.** Separate parsing, molecular selection, and pixel mathematics without requiring callers
 to depend on parser-library types or a running application.
 
-**Consequence.** Native rendering needs local coordinates and Rust dependencies only. Preserve
+**Consequence.** Render local coordinates offline or fetch an entry through the optional RCSB
+loading operation. Preserve
 author/label namespaces and stable source identity across assembly expansion and scene preparation.
 
 **Owner.** [src/lib.rs](../src/lib.rs) and
@@ -126,3 +127,39 @@ justify the implementation and maintenance cost; make no general performance ext
 
 M12 evidence: raster accounts for 2.9-7.3% of measured public render time, so the approved plan
 now explicitly defers tile binning and threading until a measured workload justifies them.
+
+### Transparent defaults and native image formats
+
+**Decision.** Background is an optional RGB value: absent/null is transparent and an explicit
+color is opaque. One `--background transparent|white|black` option overrides JSON. Keep RGB pixels
+and optional straight alpha in the owned image; choose PNG or lossless WebP by output extension.
+
+**Why.** Slide and poster reuse benefits from transparency. Optional color preserves existing
+RGB scene files without separate color/opacity settings. The existing image crate supplies both
+encoders; lossless WebP preserves the rendered pixels without a quality setting or native libwebp.
+
+**Consequence.** Atom pixels are opaque. Outline-only pixels carry black and outline coverage as
+alpha, rather than a white matte. Both encoders share atomic replacement and buffer validation.
+Rust callers provide `Some(rgb)` for opaque backgrounds and `alpha: None` for opaque RGB images.
+
+**Owner.** [settings.rs](../src/settings.rs), [render.rs](../src/render.rs), and
+[rendered_image.rs](../src/rendered_image.rs). Encoder capabilities:
+[image WebP encoder](https://docs.rs/image/latest/image/codecs/webp/struct.WebPEncoder.html).
+
+### Direct RCSB coordinate loading
+
+**Decision.** `--pdb ID` and `load_pdb` fetch mmCIF from a fixed RCSB HTTPS endpoint. Use the
+synchronous `ureq` client, verified TLS, no redirects, a 60-second timeout, and a 1 GiB body limit.
+Parse in memory using the existing CIF adapter; write no coordinate cache.
+
+**Why.** A known accession should reach a molecular image without curl. mmCIF preserves modern
+identifiers and assembly operations. This single-entry workflow needs no async runtime, arbitrary
+URL support, cache policy, or retry controls.
+
+**Consequence.** Validate legacy and extended accession syntax before networking. Report transport,
+HTTP, and parse causes with the accession; leave existing output intact on failure. Local input
+remains offline. The vossvolvox-rust Python downloader was a read-only behavior reference.
+
+**Owner.** [pdb_download.rs](../src/pdb_download.rs) and
+[command_line.rs](../src/command_line.rs). Endpoint contract:
+[RCSB file downloads](https://www.rcsb.org/docs/programmatic-access/file-download-services).

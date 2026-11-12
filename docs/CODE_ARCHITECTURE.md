@@ -35,8 +35,9 @@ input paths, prints scene diagnostics, and invokes the same library operations u
 | [src/raster.rs](../src/raster.rs) | Source-compatible sphere depth and winning-atom rasterization |
 | [src/shading.rs](../src/shading.rs) | Conical shadow sampling and depth fog |
 | [src/outlines.rs](../src/outlines.rs) | Independent contour, subunit, and residue opacity passes |
-| [src/render.rs](../src/render.rs) | Render pass composition into RGB |
-| [src/rendered_image.rs](../src/rendered_image.rs) | PNG encoding and atomic destination replacement |
+| [src/pdb_download.rs](../src/pdb_download.rs) | Validated RCSB accession, bounded synchronous HTTPS, owned mmCIF parsing |
+| [src/render.rs](../src/render.rs) | RGB composition with optional straight alpha for transparent backgrounds |
+| [src/rendered_image.rs](../src/rendered_image.rs) | PNG/lossless WebP encoding and atomic destination replacement |
 
 ## Contracts and corrections
 
@@ -57,5 +58,5 @@ outlines. [tests/render_cli.rs](../tests/render_cli.rs) checks the executable pi
 reference tools are development-only.
 
 Add format handling at the input adapters, appearance/camera behavior at scene preparation, and
-pixel mathematics in its owning render pass. Keep the public three-operation pipeline in
+pixel mathematics in its owning render pass. Keep the public loading/preparation/rendering pipeline in
 [src/lib.rs](../src/lib.rs). For developer commands, see [INSTALL.md](INSTALL.md).

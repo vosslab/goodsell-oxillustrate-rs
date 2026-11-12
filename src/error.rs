@@ -31,7 +31,14 @@ pub enum Error {
         /// Requested image height in pixels.
         height: u32,
     },
-    /// PNG encoding failed; the boxed source retains the encoder error without exposing its crate type.
+    /// An RCSB request or response read failed.
+    Download {
+        /// Requested PDB accession.
+        pdb_id: String,
+        /// Transport, HTTP, or response-read failure without exposing an HTTP-library type.
+        source: Box<dyn std::error::Error + Send + Sync>,
+    },
+    /// Image encoding failed; the boxed source retains the encoder error without exposing its crate type.
     Image(Box<dyn std::error::Error + Send + Sync>),
 }
 
@@ -47,6 +54,9 @@ impl fmt::Display for Error {
                 write!(formatter, "cannot allocate {width} x {height} image")
             }
             Self::Image(source) => write!(formatter, "image output: {source}"),
+            Self::Download { pdb_id, source } => {
+                write!(formatter, "RCSB download for {pdb_id}: {source}")
+            }
         }
     }
 }
@@ -55,7 +65,7 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Io { source, .. } => Some(source),
-            Self::Image(source) => Some(source.as_ref()),
+            Self::Image(source) | Self::Download { source, .. } => Some(source.as_ref()),
             _ => None,
         }
     }

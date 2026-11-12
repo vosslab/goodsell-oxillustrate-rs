@@ -1,6 +1,6 @@
-//! Native, synchronous molecular illustration from local structure coordinates.
+//! Native, synchronous molecular illustration from local coordinates or an RCSB entry.
 //!
-//! Load a structure, prepare its visible spheres, and save the rendered RGB image:
+//! Load a structure, prepare its visible spheres, and save its transparent image:
 //!
 //! ```no_run
 //! use oxillustrate::{SceneSettings, load_structure, prepare_scene, render};
@@ -8,12 +8,14 @@
 //! fn main() -> Result<(), oxillustrate::Error> {
 //!     let structure = load_structure("structure.cif")?;
 //!     let scene = prepare_scene(&structure, &SceneSettings::default())?;
-//!     render(&scene)?.save_png("structure.png")?;
+//!     render(&scene)?.save("structure.webp")?;
 //!     Ok(())
 //! }
 //! ```
 //!
 //! Input supports PDB, PDBx/mmCIF, and PDBML XML, optionally gzip compressed.
+//! [`load_pdb`] downloads mmCIF coordinates from RCSB by accession without saving an input file.
+//! PNG and lossless WebP preserve alpha; an explicit background color selects opaque output.
 //! [`SceneSettings`] supplies validated defaults and JSON-deserializable appearance controls.
 //! [`Scene`] owns its prepared spheres; rendering requires no further file reads.
 #![forbid(unsafe_code)]
@@ -27,6 +29,7 @@ mod error;
 mod input;
 mod molecular;
 mod outlines;
+mod pdb_download;
 mod pdb_input;
 mod raster;
 mod render;
@@ -42,6 +45,7 @@ pub use input::load_structure;
 pub use molecular::{
     Assembly, AssemblyGenerator, Atom, AtomKind, Namespace, ResidueId, Structure, Transform,
 };
+pub use pdb_download::load_pdb;
 pub use render::render;
 pub use rendered_image::RenderedImage;
 pub use scene::{Scene, Sphere};

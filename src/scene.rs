@@ -30,8 +30,8 @@ pub struct Scene {
     pub height: u32,
     /// Visible atom instances as projected spheres.
     pub spheres: Vec<Sphere>,
-    /// Background RGB components in the range 0 to 1.
-    pub background: [f64; 3],
+    /// Opaque background RGB components, or None for a transparent background.
+    pub background: Option<[f64; 3]>,
     /// Depth-dependent color mixing settings.
     pub fog: FogSettings,
     /// Screen-space shadow settings.

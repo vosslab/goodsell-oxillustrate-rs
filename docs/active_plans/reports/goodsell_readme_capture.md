@@ -1,5 +1,21 @@
 # Molecular illustration documentation captures
 
+## Native feature update
+
+The later 2026-11-12 implementation adds native `--pdb` downloads, transparent backgrounds,
+and PNG/lossless WebP output. Current README/usage commands use these features without curl.
+The original gallery-capture receipt below describes the earlier run, including its external
+quality-90 conversion for documentation assets. Hemoglobin and capsid opaque PNGs were reproduced
+byte-for-byte by the updated renderer and live downloader. Gallery commands explicitly request
+white backgrounds to preserve those existing views.
+
+The new [transparent_backgrounds.webp](../../screenshots/transparent_backgrounds.webp) compares
+the same native RGBA hemoglobin over white and dark slide colors. It is 1600 x 1000, 169428 bytes,
+encoded at quality 90 and visually inspected. Native PNG and lossless WebP source pixels match
+exactly. This fourth asset has a live usage-guide embed; no existing image is removed.
+
+## Original gallery capture
+
 Capture date: 2026-11-12; receipt timestamp: 06:37 UTC. Root package `oxillustrate` 26.11.0;
 macOS arm64, Rust 1.99.1. Skills: `readme-docs` and `screenshot-docs`.
 

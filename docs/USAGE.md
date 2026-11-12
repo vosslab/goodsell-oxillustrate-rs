@@ -1,6 +1,6 @@
 # Usage
 
-Render a local molecular structure to PNG with `illustrate`, or call the same pipeline from Rust.
+Render a local molecular structure or an RCSB entry to PNG or WebP with `illustrate`.
 Build the executable first using [INSTALL.md](INSTALL.md). Commands below run from the repo root.
 
 ## Quick start
@@ -10,41 +10,58 @@ mkdir -p output
 ./target/release/illustrate examples/sample.pdb --output output/sample.png
 ```
 
-The original synthetic four-atom example writes an 800 x 800 image with automatic framing, white background, warm chain colors,
-conical shadows, and contour, subunit, and residue outlines. Native defaults hide H, D, and water
+The original synthetic four-atom example writes an 800 x 800 image with automatic framing and warm chain colors,
+conical shadows, and contour, subunit, and residue outlines. Its background is transparent.
+Native defaults hide H, D, and water
 and retain other hetero atoms. The first model in source order is selected.
 
 Replace the sample with your local structure path, or use the public hemoglobin example:
 
 ```bash
-curl -L https://files.rcsb.org/download/2HHB.cif -o output/2hhb.cif
-./target/release/illustrate output/2hhb.cif --output output/hemoglobin.png \
+./target/release/illustrate --pdb 2hhb --output output/hemoglobin.png \
   --scene examples/hemoglobin.json
 ```
 
 [hemoglobin.json](../examples/hemoglobin.json) specifies a 922 x 750 image, source-style
 orientation and ordered pink/peach protein and red-heme rules.
 
+## Transparency and output format
+
+The output filename selects `.png` or `.webp`, case-insensitively. WebP is encoded natively and
+losslessly; both formats preserve alpha. New scenes have a transparent background by default.
+Use `--background white` or `--background black` for an opaque image, or
+`--background transparent` to override an RGB background in a scene file.
+
+```bash
+./target/release/illustrate --pdb 1lmb --output output/protein.webp
+./target/release/illustrate --pdb 1lmb --background white --output output/protein_white.png
+```
+
+In JSON, `"background": null` means transparent; an RGB triple such as `[1,1,1]` means opaque.
+Existing RGB-background scene files keep their appearance. Atom surfaces remain opaque;
+outline-only pixels carry black with fractional alpha, avoiding a white fringe when composited.
+Depth fog still uses the scene's explicit fog color; transparency does not recolor molecular atoms.
+
 ## More molecular examples
 
 These images were rendered by the same `illustrate` program. The first shows lambda repressor
 bound to DNA (PDB 1LMB), with colors distinguishing the chains. The second shows the complete
-biological assembly 1 of cowpea chlorotic mottle virus (PDB 1CWP).
+biological assembly 1 of cowpea chlorotic mottle virus (PDB 1CWP). The last image shows the same
+transparent hemoglobin render composited over light and dark slide backgrounds.
 
 <!-- screenshots:begin (managed by screenshot-docs) -->
 ![Lambda repressor bound to DNA, with different colors for each chain](screenshots/lambda_dna.webp)
 ![Complete cowpea chlorotic mottle virus capsid, showing its repeating protein subunits](screenshots/cowpea_capsid.webp)
+![The same transparent hemoglobin illustration over light and dark backgrounds, without a white fringe](screenshots/transparent_backgrounds.webp)
 <!-- screenshots:end -->
 
 Download the coordinates and make the images:
 
 ```bash
 mkdir -p output
-curl --fail --location https://files.rcsb.org/download/1LMB.cif --output output/1lmb.cif
-./target/release/illustrate output/1lmb.cif --output output/lambda_dna.png \
+./target/release/illustrate --pdb 1lmb --background white --output output/lambda_dna.png \
   --width 960 --height 600
-curl --fail --location https://files.rcsb.org/download/1CWP.cif --output output/1cwp.cif
-./target/release/illustrate output/1cwp.cif --assembly 1 --output output/cowpea_capsid.png \
+./target/release/illustrate --pdb 1cwp --assembly 1 --background white --output output/cowpea_capsid.png \
   --width 1600 --height 1000
 ```
 
@@ -54,12 +71,14 @@ The images are 960 x 600 and 1600 x 1000 PNGs, respectively. The virus example u
 ## Command-line options
 
 ```text
-illustrate <INPUT> --output <OUTPUT> [OPTIONS]
+illustrate [INPUT | --pdb ID] --output <OUTPUT> [OPTIONS]
 ```
 
 | Option | Behavior |
 | --- | --- |
-| `--output`, `-o` | Required destination PNG filename |
+| `--pdb` | Download one RCSB entry by case-insensitive accession; replaces local INPUT |
+| `--output`, `-o` | Required destination `.png` or `.webp` filename |
+| `--background` | Override JSON with `transparent`, `white`, or `black` |
 | `--scene` | Read partial scene settings from a JSON file |
 | `--width`, `--height` | Override image dimensions in pixels |
 | `--model` | Select a positive deposited model number |
@@ -70,7 +89,7 @@ Explicit flags take precedence over JSON settings. Deposited coordinates are the
 assembly selection requires metadata in the input. For example:
 
 ```bash
-./target/release/illustrate output/2hhb.cif --output output/assembly.png \
+./target/release/illustrate --pdb 2hhb --output output/assembly.png \
   --assembly 1 --width 1000 --height 1000
 ```
 
@@ -107,19 +126,25 @@ use oxillustrate::{SceneSettings, load_structure, prepare_scene, render};
 fn main() -> Result<(), oxillustrate::Error> {
     let structure = load_structure("structure.cif")?;
     let scene = prepare_scene(&structure, &SceneSettings::default())?;
-    render(&scene)?.save_png("structure.png")?;
+    render(&scene)?.save("structure.webp")?;
     Ok(())
 }
 ```
 
+Replace `load_structure("structure.cif")` with `oxillustrate::load_pdb("1lmb")` to download by ID.
+`RenderedImage.pixels` holds RGB bytes; its optional `alpha` vector holds one straight-alpha byte
+per pixel. `save` selects the encoder by extension; `save_png` and `save_webp` select it explicitly.
 Run `cargo doc --no-deps --locked --open` to browse the public API. `Scene` owns prepared spheres;
 rendering does not reread the input. Diagnostics are retained on the prepared scene and printed
 by the CLI.
 
 ## Inputs, output, and limits
 
-Output is currently opaque RGB PNG. Transparent backgrounds and native WebP output are
-high-priority follow-ups in [TODO.md](TODO.md); the documentation WebPs are converted separately.
+`--pdb` uses RCSB's HTTPS mmCIF service, preserving chain IDs and assembly definitions. It accepts
+four-character IDs such as `1lmb` and extended IDs such as `pdb_00001lmb`. The response is parsed
+in memory with a 60-second timeout and 1 GiB limit; no coordinate cache is written. A download
+failure leaves an existing image untouched. Local-file rendering needs no network connection.
+Service details: [RCSB file downloads](https://www.rcsb.org/docs/programmatic-access/file-download-services).
 
 Input supports PDB/ENT, macromolecular PDBx/mmCIF, and PDBML XML, optionally gzip compressed.
 CIF accepts one data block and no save frames. Alternate locations use highest mean occupancy
@@ -133,3 +158,6 @@ Limits are 1 GiB decompressed input, 16,777,216 image pixels, 1,000,000 expanded
 and 20,000,000 assembly atom references. Unsupported selections, empty visible scenes, and invalid
 numeric settings return errors. These limits bound work; they do not guarantee sufficient memory
 for every permitted input.
+
+WebP additionally limits each image dimension to 16384 pixels. An unsupported format or size
+returns an error and preserves an existing destination file.

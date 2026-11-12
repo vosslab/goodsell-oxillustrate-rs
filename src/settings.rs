@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{AtomKind, Error, Namespace};
 
-/// Bounds scratch storage to approximately 400 MiB; allocation remains fallible.
+/// Bounds raster scratch storage; additional image-buffer allocations remain fallible.
 pub const MAX_PIXELS: usize = 16_777_216;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -23,8 +23,8 @@ pub struct SceneSettings {
     pub translation: [f64; 3],
     /// Centering and orthographic scale controls.
     pub framing: Framing,
-    /// Background RGB components in the inclusive range 0 to 1.
-    pub background: [f64; 3],
+    /// Background RGB components in the range 0 to 1; None (JSON null) is transparent.
+    pub background: Option<[f64; 3]>,
     /// Ordered appearance rules; the first matching rule wins.
     pub atom_rules: Vec<AtomRule>,
     /// Molecular color weights and color used for depth fog.
@@ -45,7 +45,7 @@ impl Default for SceneSettings {
             orientation: [0.0; 3],
             translation: [0.0; 3],
             framing: Framing::default(),
-            background: [1.0; 3],
+            background: None,
             atom_rules: Vec::new(),
             fog: FogSettings::default(),
             shadows: ShadowSettings::default(),
@@ -296,7 +296,9 @@ impl SceneSettings {
         {
             return invalid("framing margin must leave room for the molecule");
         }
-        color("background", &self.background)?;
+        if let Some(background) = self.background {
+            color("background", &background)?;
+        }
         color("fog color", &self.fog.color)?;
         unit("fog front", self.fog.front)?;
         unit("fog back", self.fog.back)?;
@@ -398,6 +400,11 @@ mod tests {
             Namespace::Author
         );
         assert_eq!(settings.fog.front, 1.0);
+        assert_eq!(settings.background, None);
+        let opaque: SceneSettings = serde_json::from_str(r#"{"background":[1,1,1]}"#).unwrap();
+        assert_eq!(opaque.background, Some([1.0; 3]));
+        let transparent: SceneSettings = serde_json::from_str(r#"{"background":null}"#).unwrap();
+        assert_eq!(transparent.background, None);
     }
 
     #[test]

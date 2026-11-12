@@ -32,7 +32,7 @@ impl<'a> Shading<'a> {
     pub(crate) fn color(&self, row: usize, col: usize) -> [f64; 3] {
         let index = row * self.buffer.width as usize + col;
         let Some(atom) = self.buffer.atom_index[index] else {
-            return self.scene.background;
+            return self.scene.background.unwrap_or([0.0; 3]);
         };
         let shadow = self.shadow_factor(row, col);
         let weight = self.fog_weight(self.buffer.depth[index]);
@@ -100,7 +100,7 @@ mod tests {
                 chain_id: 0,
                 residue_number: None,
             }],
-            background: [0.1, 0.2, 0.3],
+            background: Some([0.1, 0.2, 0.3]),
             fog: FogSettings {
                 color: [1.0; 3],
                 front: 0.8,
@@ -209,7 +209,7 @@ mod tests {
         close(Shading::new(&scene, &buffer).shadow_factor(55, 50), 1.0);
         assert_eq!(
             Shading::new(&scene, &buffer).color(55, 50),
-            scene.background
+            scene.background.unwrap()
         );
         scene.shadows.enabled = false;
         close(Shading::new(&scene, &buffer).shadow_factor(55, 55), 1.0);
@@ -248,6 +248,6 @@ mod tests {
         for (actual, base) in shading.color(55, 55).into_iter().zip([0.8, 0.4, 0.2]) {
             close(actual, 0.5 * 0.9 * base + 0.5);
         }
-        assert_eq!(shading.color(0, 0), scene.background);
+        assert_eq!(shading.color(0, 0), scene.background.unwrap());
     }
 }

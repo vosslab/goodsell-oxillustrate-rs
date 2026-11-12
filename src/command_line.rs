@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -13,8 +13,12 @@ use oxillustrate::{Error, SceneSettings};
 )]
 struct Arguments {
     /// Local PDB, mmCIF, or PDBML structure, optionally gzip compressed.
-    input: PathBuf,
-    /// Destination PNG file.
+    #[arg(required_unless_present = "pdb", conflicts_with = "pdb")]
+    input: Option<PathBuf>,
+    /// Download an RCSB entry by PDB ID, for example 1lmb.
+    #[arg(long, value_name = "ID", required_unless_present = "input")]
+    pdb: Option<String>,
+    /// Destination .png or .webp file.
     #[arg(short, long)]
     output: PathBuf,
     /// JSON scene settings; explicit command-line flags take precedence.
@@ -28,11 +32,23 @@ struct Arguments {
     model: Option<i32>,
     #[arg(long)]
     assembly: Option<String>,
+    /// Override scene background; transparent is the default without a scene color.
+    #[arg(long, value_enum)]
+    background: Option<Background>,
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum Background {
+    Transparent,
+    White,
+    Black,
 }
 
 pub fn run() -> Result<(), Error> {
     let arguments = Arguments::parse();
-    protect_input(&arguments.output, &arguments.input)?;
+    if let Some(input) = &arguments.input {
+        protect_input(&arguments.output, input)?;
+    }
     if let Some(path) = &arguments.scene {
         protect_input(&arguments.output, path)?;
     }
@@ -59,13 +75,24 @@ pub fn run() -> Result<(), Error> {
     if let Some(assembly) = arguments.assembly {
         settings.assembly = Some(assembly);
     }
+    if let Some(background) = arguments.background {
+        settings.background = match background {
+            Background::Transparent => None,
+            Background::White => Some([1.0; 3]),
+            Background::Black => Some([0.0; 3]),
+        };
+    }
     settings.validate()?;
-    let structure = oxillustrate::load_structure(&arguments.input)?;
+    let structure = match (&arguments.input, &arguments.pdb) {
+        (Some(input), None) => oxillustrate::load_structure(input)?,
+        (None, Some(id)) => oxillustrate::load_pdb(id)?,
+        _ => return Err(Error::Selection("provide a local input or --pdb ID".into())),
+    };
     let scene = oxillustrate::prepare_scene(&structure, &settings)?;
     for diagnostic in &scene.diagnostics {
         eprintln!("illustrate: {diagnostic}");
     }
-    oxillustrate::render(&scene)?.save_png(&arguments.output)
+    oxillustrate::render(&scene)?.save(&arguments.output)
 }
 
 fn protect_input(output: &Path, input: &Path) -> Result<(), Error> {
@@ -76,7 +103,7 @@ fn protect_input(output: &Path, input: &Path) -> Result<(), Error> {
     match fs::canonicalize(output) {
         Ok(canonical_output) if canonical_output == canonical_input => {
             Err(Error::Settings(format!(
-                "output {} would overwrite input {}; choose a different PNG path",
+                "output {} would overwrite input {}; choose a different image path",
                 output.display(),
                 input.display()
             )))

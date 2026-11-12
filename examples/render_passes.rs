@@ -79,6 +79,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             width: scene.width,
             height: scene.height,
             pixels,
+            alpha: if name == "image" {
+                rendered.alpha.clone()
+            } else {
+                None
+            },
         }
         .save_png(output.join(format!("{name}.png")))?;
     }

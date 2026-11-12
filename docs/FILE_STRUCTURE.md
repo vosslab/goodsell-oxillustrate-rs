@@ -5,7 +5,7 @@
 | Path | Purpose |
 | --- | --- |
 | [Cargo.toml](../Cargo.toml), [Cargo.lock](../Cargo.lock) | Native package, dependency floors, and locked resolution |
-| [src/](../src/) | Library, CLI, parsers, scene preparation, render passes, PNG output |
+| [src/](../src/) | Library, CLI, local/RCSB input, render passes, PNG/WebP output |
 | [examples/hemoglobin.json](../examples/hemoglobin.json) | Scene settings and render-pass evidence example |
 | [tests/](../tests/) | Rust CLI integration tests and repository maintenance checks |
 | [devel/](../devel/) | Development and reference-comparison tools |

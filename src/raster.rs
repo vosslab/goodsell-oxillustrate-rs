@@ -196,7 +196,7 @@ mod tests {
             width: 7,
             height: 5,
             spheres,
-            background: [1.0; 3],
+            background: Some([1.0; 3]),
             fog: FogSettings::default(),
             shadows: ShadowSettings::default(),
             outlines: OutlineSettings::default(),

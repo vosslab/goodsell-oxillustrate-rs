@@ -4,16 +4,32 @@
 
 ### Additions and New Features
 
-- Record transparent-background/alpha PNG support and native WebP output, including alpha,
-  as the top feature priorities in [TODO.md](TODO.md). Clarify that current native output is
-  opaque RGB PNG and documentation WebPs are external conversions; neither feature is added yet.
+- Implement native `--pdb ID` / `load_pdb` RCSB downloads without curl. Fetch mmCIF with a
+  synchronous TLS client, validated legacy/extended accessions, a 60-second timeout, and the
+  existing 1 GiB input bound. Keep local input available and mutually exclusive with `--pdb`.
+- Implement native RGBA PNG and lossless WebP encoding. Filename extension chooses the format;
+  both encoders preserve alpha and use the existing atomic-save path. Preserve RGB pixels in
+  the public image type and add an optional straight-alpha vector.
+- Initially record transparent PNG and native WebP as top feature priorities in
+  [TODO.md](TODO.md). At that checkpoint native output was opaque RGB PNG only;
+  the implementation above completes those priorities.
 - Add current CLI renders of lambda repressor bound to DNA and the complete cowpea chlorotic
   mottle virus capsid to the usage guide. Store quality-90 WebP captures with their commands,
   coordinate provenance, and image hashes in
   [goodsell_readme_capture.md](active_plans/reports/goodsell_readme_capture.md).
 
+### Behavior or Interface Changes
+
+- Default new scenes to transparent. `--background transparent|white|black` overrides JSON;
+  JSON null means transparent and existing RGB background triples remain opaque. Rust scene
+  backgrounds now use `Option<[f64; 3]>`. Partially covered outline pixels carry black with
+  alpha coverage, removing a white matte without changing the opaque rendering equations.
+
 ### Fixes and Maintenance
 
+- Update student-facing commands to download and render directly; document native format and
+  background selection, API additions, and completed feature priorities. Add an actual light/dark
+  transparency comparison in [USAGE.md](USAGE.md).
 - Rewrite the README for a biology master's student making a protein image: start with real
   hemoglobin, explain the resulting PNG, and guide structure, size, assembly, color, and view
   choices. Keep developer internals in supporting documentation and record the audience guidance.
@@ -31,12 +47,17 @@
 
 ### Removals and Deprecations
 
+- Archive the completed [image_output_downloads.md](archive/image_output_downloads.md) plan
+  using `git mv`; retain its implementation and verification evidence in the linked report.
 - The agent-added GitHub Actions workflow is removed; the user does not use GitHub workflows.
 - Remove the added regression test for the local vendored helper override. The helper now
   matches its tracked version; no local vendored helper changes remain.
 
 ### Decisions and Failures
 
+- Use one background selector, native lossless WebP, and a fixed RCSB service without cache,
+  arbitrary URLs, or async infrastructure. The suggested vossvolvox-rust repository supplies a
+  read-only Python E2E download example; no code or master vendored files there are changed.
 - Treating the plan's generic native-CI wording as a request for GitHub Actions was an agent
   assumption. The user's local workflow takes precedence.
 - The earlier collection fix changed the vendored helper to check file existence before
@@ -46,6 +67,15 @@
 
 ### Developer Tests and Notes
 
+- Native feature checks pass formatting, locked all-target compilation, 44 unit tests, 5 CLI/API
+  integration tests, 1 doctest, Clippy with warnings denied, and rustdoc with missing docs denied.
+  Fresh repository pytest passes: 953 tests before archival and 957 after archival/link repair.
+  Real RCSB legacy/extended-ID requests and an
+  installed outside-source render pass; HTTP 404 preserves existing output. PNG/WebP RGBA pixels
+  match exactly. Opaque hemoglobin and the full capsid remain byte-identical to prior PNGs.
+- Visually inspect the quality-90 light/dark transparency comparison. Native WebP is lossless
+  with alpha. Current changes are checked on macOS arm64; Linux/platform and Fortran oracle
+  validation were not repeated for this feature change.
 - Student-focused README/capture verification passes the locked release build, executable help,
   public structure downloads, all three illustrated examples, own-protein and larger-image
   commands, and equivalent synthetic PDB/mmCIF/XML renders. Inspect all three quality-90 WebPs;

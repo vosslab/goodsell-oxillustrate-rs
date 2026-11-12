@@ -7,8 +7,8 @@ Run the following commands from a source checkout containing [Cargo.toml](../Car
 
 - Rust 1.99.1 or newer, with Cargo; the crate uses Rust edition 2024.
 - Network access for the first dependency download, unless Cargo already has the locked crates.
-- A local PDB, PDBx/mmCIF, or PDBML XML file for rendering; gzip input is supported.
-- `curl` only for the optional public-data download shown in [USAGE.md](USAGE.md).
+- A local PDB, PDBx/mmCIF, or PDBML XML file, or internet access to use `--pdb ID`.
+  Gzip input is supported. Downloads use verified HTTPS directly from Rust; no `curl` is needed.
 
 The native build uses Rust dependencies from [Cargo.lock](../Cargo.lock). It does not require
 Python, Fortran, a GPU, or the ignored local reference collections.
@@ -28,7 +28,7 @@ no global installation is required. The library is available to Cargo builds as 
 ./target/release/illustrate --help
 ```
 
-Successful help output identifies the required structure input and `--output` PNG path.
+Successful help output identifies local input or `--pdb ID`, and the `--output` PNG/WebP path.
 For a complete render, follow [USAGE.md](USAGE.md).
 
 ## Developer checks
@@ -50,6 +50,10 @@ source source_me.sh && pytest tests/
 Python is development tooling, not a renderer dependency.
 
 ## Verification status
+
+The 2026-11-12 transparent PNG/WebP and native RCSB-download changes are verified on macOS arm64,
+including real HTTPS downloads. The platform evidence below describes the 2026-11-11 baseline;
+the new network and output features have not been rerun under Linux.
 
 Clean-source macOS arm64 build, formatting, tests, Clippy, installation, and outside-source CLI
 rendering pass. Linux x86_64 cross-build, tests, installation, and actual emulated CLI rendering

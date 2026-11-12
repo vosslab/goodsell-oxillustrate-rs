@@ -8,6 +8,10 @@ origin belongs there too. Rules: [REPO_STYLE.md](REPO_STYLE.md).
 [PROPAGATED HEADER - ENTRIES BELOW ARE YOURS]
 <!-- VENDORED HEADER: END -->
 
+- 2026-11-12: Implement transparent output, native WebP, and native `--pdb 1lmb` downloads now.
+  Use the vossvolvox-rust repository as a read-only example. Prefer transparency as the default
+  and provide simple choices for white and black backgrounds.
+
 - 2026-11-12: Make alpha-channel/transparent-background support and native WebP output
   high priorities for the image renderer.
 
