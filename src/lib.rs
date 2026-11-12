@@ -47,7 +47,7 @@ pub use molecular::{
     Assembly, AssemblyGenerator, Atom, AtomKind, Namespace, ResidueId, Structure, Transform,
 };
 pub use pdb_download::load_pdb;
-pub use render::render;
+pub use render::{render, render_with_bounds};
 pub use rendered_image::RenderedImage;
 pub use scene::{Scene, Sphere};
 pub use scene_preparation::prepare_scene;

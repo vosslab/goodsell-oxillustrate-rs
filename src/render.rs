@@ -10,6 +10,15 @@ use crate::{Error, RenderedImage, Scene, outlines, raster};
 /// Returns `Error::EmptyScene` if no sphere covers the image and `Error::Allocation` if
 /// raster or RGB storage cannot be reserved within the image limit.
 pub fn render(scene: &Scene) -> Result<RenderedImage, Error> {
+    render_with_bounds(scene).map(|(image, _)| image)
+}
+
+/// Render the same trimmed image as [`render`], with its `[left, top]` canvas origin.
+/// Paste the image at that pixel offset, without scaling, to restore the scene canvas.
+///
+/// # Errors
+/// Returns the same raster and allocation errors as [`render`].
+pub fn render_with_bounds(scene: &Scene) -> Result<(RenderedImage, [u32; 2]), Error> {
     let buffer = raster::rasterize(scene)?;
     let allocation_error = || Error::Allocation {
         width: scene.width,
@@ -84,11 +93,12 @@ pub fn render(scene: &Scene) -> Result<RenderedImage, Error> {
         pixels = crop(&pixels, 3)?;
         alpha = alpha.as_deref().map(|bytes| crop(bytes, 1)).transpose()?;
     }
-    Ok(RenderedImage {
+    let image = RenderedImage {
         width,
         height,
         dpi: scene.dpi,
         pixels,
         alpha,
-    })
+    };
+    Ok((image, [bounds[1] as u32, bounds[0] as u32]))
 }

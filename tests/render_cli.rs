@@ -35,6 +35,126 @@ const CIF: &str = "data_test\nloop_\n_atom_site.id\n_atom_site.type_symbol\n_ato
 const XML: &str = "<datablock><atom_siteCategory><atom_site id='1'><type_symbol>C</type_symbol><label_atom_id>CA</label_atom_id><label_comp_id>GLY</label_comp_id><Cartn_x>1</Cartn_x><Cartn_y>2</Cartn_y><Cartn_z>3</Cartn_z></atom_site></atom_siteCategory></datablock>";
 
 #[test]
+fn crop_origin_reconstructs_asymmetric_canvas_coverage_including_white_atoms() {
+    let temporary = TemporaryDirectory::new();
+    let input = temporary.0.join("one.pdb");
+    fs::write(&input, PDB).unwrap();
+    let structure = oxillustrate::load_structure(&input).unwrap();
+    let settings = SceneSettings {
+        width: 100,
+        height: 80,
+        ..SceneSettings::default()
+    };
+    let mut scene = oxillustrate::prepare_scene(&structure, &settings).unwrap();
+    scene.outlines.contour_enabled = false;
+    scene.outlines.subunit_enabled = false;
+    scene.outlines.residue_enabled = false;
+    scene.shadows.enabled = false;
+    scene.spheres[0].center = [24.0, 61.0, -20.0];
+    scene.spheres[0].radius = 6.0;
+    scene.spheres[0].color = [1.0; 3];
+    let mut second = scene.spheres[0].clone();
+    second.center = [43.0, 34.0, -20.0];
+    second.radius = 3.0;
+    scene.spheres.push(second);
+    let (image, origin) = oxillustrate::render_with_bounds(&scene).unwrap();
+    assert_eq!(origin, [27, 14]);
+    assert_eq!((image.width, image.height), (43, 35));
+    assert_eq!(image, oxillustrate::render(&scene).unwrap());
+    let alpha = image.alpha.as_ref().unwrap();
+    let mut restored = vec![0; (scene.width * scene.height) as usize];
+    for row in 0..image.height {
+        let start = ((row + origin[1]) * scene.width + origin[0]) as usize;
+        let crop_start = (row * image.width) as usize;
+        restored[start..start + image.width as usize]
+            .copy_from_slice(&alpha[crop_start..crop_start + image.width as usize]);
+    }
+    for row in 0..scene.height {
+        for column in 0..scene.width {
+            let covered = scene.spheres.iter().any(|sphere| {
+                let dr = f64::from(row + 1) - sphere.center[0];
+                let dc = f64::from(column + 1) - sphere.center[1];
+                dr * dr + dc * dc <= sphere.radius * sphere.radius
+            });
+            assert_eq!(
+                restored[(row * scene.width + column) as usize],
+                if covered { 255 } else { 0 }
+            );
+        }
+    }
+    scene.background = Some([1.0; 3]);
+    let (opaque, opaque_origin) = oxillustrate::render_with_bounds(&scene).unwrap();
+    assert_eq!(opaque_origin, origin);
+    assert_eq!((opaque.width, opaque.height), (image.width, image.height));
+    assert!(opaque.alpha.is_none());
+    assert!(opaque.pixels.iter().all(|value| *value == 255));
+}
+
+#[test]
+fn cli_crop_metadata_matches_library_and_protects_all_destinations() {
+    let temporary = TemporaryDirectory::new();
+    let input = temporary.0.join("one.pdb");
+    let settings_path = temporary.0.join("scene.json");
+    let output = temporary.0.join("image.webp");
+    let metadata = temporary.0.join("frame.json");
+    fs::write(&input, PDB).unwrap();
+    let mut settings = SceneSettings {
+        width: 100,
+        height: 80,
+        ..SceneSettings::default()
+    };
+    settings.framing.scale = Some(4.0);
+    settings.framing.center = Some([4.0, -1.0, 20.0]);
+    fs::write(&settings_path, serde_json::to_vec(&settings).unwrap()).unwrap();
+    let run = |metadata_path: &std::path::Path| {
+        Command::new(env!("CARGO_BIN_EXE_illustrate"))
+            .arg(&input)
+            .arg("--scene")
+            .arg(&settings_path)
+            .arg("--output")
+            .arg(&output)
+            .arg("--metadata")
+            .arg(metadata_path)
+            .output()
+            .unwrap()
+    };
+    // Also reject an alias of an image destination that does not exist yet.
+    let output_alias = temporary.0.join(".").join("image.webp");
+    assert!(!run(&output_alias).status.success());
+    assert!(!output.exists());
+    let result = run(&metadata);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let structure = oxillustrate::load_structure(&input).unwrap();
+    let scene = oxillustrate::prepare_scene(&structure, &settings).unwrap();
+    let (image, origin) = oxillustrate::render_with_bounds(&scene).unwrap();
+    let actual: serde_json::Value = serde_json::from_slice(&fs::read(&metadata).unwrap()).unwrap();
+    assert_eq!(
+        actual,
+        serde_json::json!({"canvas": [100, 80], "crop_origin": origin})
+    );
+    let decoded = image::open(&output).unwrap().to_rgba8();
+    assert_eq!(decoded.dimensions(), (image.width, image.height));
+    for (index, pixel) in decoded.pixels().enumerate() {
+        assert_eq!(&pixel.0[..3], &image.pixels[index * 3..index * 3 + 3]);
+        assert_eq!(pixel.0[3], image.alpha.as_ref().unwrap()[index]);
+    }
+    let original_output = fs::read(&output).unwrap();
+    for target in [&input, &settings_path, &output] {
+        assert!(!run(target).status.success());
+    }
+    assert_eq!(fs::read_to_string(&input).unwrap(), PDB);
+    assert_eq!(fs::read(&output).unwrap(), original_output);
+    let bad_path = temporary.0.join("missing_parent").join("frame.json");
+    let result = run(&bad_path);
+    assert!(!result.status.success());
+    assert!(!result.stderr.is_empty());
+}
+
+#[test]
 fn trimming_keeps_all_coverage_without_resampling_or_using_background_color() {
     let temporary = TemporaryDirectory::new();
     let input = temporary.0.join("one.pdb");

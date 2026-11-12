@@ -21,6 +21,9 @@ struct Arguments {
     /// Destination .png or .webp file.
     #[arg(short, long)]
     output: PathBuf,
+    /// Write JSON canvas dimensions and crop origin for fixed-canvas reconstruction.
+    #[arg(long, value_name = "PATH")]
+    metadata: Option<PathBuf>,
     /// JSON scene settings; explicit command-line flags take precedence.
     #[arg(long)]
     scene: Option<PathBuf>,
@@ -56,6 +59,13 @@ pub fn run() -> Result<(), Error> {
     }
     if let Some(path) = &arguments.scene {
         protect_input(&arguments.output, path)?;
+    }
+    if let Some(metadata) = &arguments.metadata {
+        // ASVS 2.2.1: output destinations must not overwrite structural or scene inputs.
+        for input in [&arguments.input, &arguments.scene].into_iter().flatten() {
+            protect_input(metadata, input)?;
+        }
+        protect_input(metadata, &arguments.output)?;
     }
     let mut settings = match &arguments.scene {
         Some(path) => {
@@ -100,8 +110,18 @@ pub fn run() -> Result<(), Error> {
     for diagnostic in &scene.diagnostics {
         eprintln!("illustrate: {diagnostic}");
     }
-    let image = oxillustrate::render(&scene)?;
+    let (image, crop_origin) = oxillustrate::render_with_bounds(&scene)?;
     image.save(&arguments.output)?;
+    if let Some(path) = &arguments.metadata {
+        let metadata = serde_json::json!({
+            "canvas": [scene.width, scene.height],
+            "crop_origin": crop_origin,
+        });
+        fs::write(path, format!("{metadata}\n")).map_err(|source| Error::Io {
+            path: path.clone(),
+            source,
+        })?;
+    }
     eprintln!(
         "illustrate: {} x {} pixels at {} dpi; print size {:.2} x {:.2} inches",
         image.width,
@@ -114,14 +134,14 @@ pub fn run() -> Result<(), Error> {
 }
 
 fn protect_input(output: &Path, input: &Path) -> Result<(), Error> {
-    let canonical_input = fs::canonicalize(input).map_err(|source| Error::Io {
+    let canonical_input = canonical_destination(input).map_err(|source| Error::Io {
         path: input.to_owned(),
         source,
     })?;
-    match fs::canonicalize(output) {
+    match canonical_destination(output) {
         Ok(canonical_output) if canonical_output == canonical_input => {
             Err(Error::Settings(format!(
-                "output {} would overwrite input {}; choose a different image path",
+                "output {} would overwrite input {}; choose a different output path",
                 output.display(),
                 input.display()
             )))
@@ -133,4 +153,17 @@ fn protect_input(output: &Path, input: &Path) -> Result<(), Error> {
             source,
         }),
     }
+}
+
+fn canonical_destination(path: &Path) -> std::io::Result<PathBuf> {
+    fs::canonicalize(path).or_else(|error| {
+        if error.kind() != std::io::ErrorKind::NotFound {
+            return Err(error);
+        }
+        let parent = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        Ok(fs::canonicalize(parent)?.join(path.file_name().unwrap_or_default()))
+    })
 }

@@ -88,6 +88,7 @@ illustrate [INPUT | --pdb ID] --output <OUTPUT> [OPTIONS]
 | --- | --- |
 | `--pdb` | Download one RCSB entry by case-insensitive accession; replaces local INPUT |
 | `--output`, `-o` | Required destination `.png` or `.webp` filename |
+| `--metadata PATH` | Optional JSON with original canvas dimensions and crop origin |
 | `--background` | Override JSON with `transparent`, `white`, or `black` |
 | `--scene` | Read partial scene settings from a JSON file |
 | `--width`, `--height` | Override render canvas dimensions in pixels, before trimming |
@@ -199,6 +200,24 @@ Replace `load_structure("structure.cif")` with `oxillustrate::load_pdb("1lmb")` 
 per pixel. `RenderedImage.dpi` holds print resolution. The returned width/height are the cropped
 dimensions. `save` selects the encoder by extension;
 `save_png` and `save_webp` select it explicitly.
+
+For animation frames, use `render_with_bounds(&scene)` to receive `(image, [left, top])`.
+The CLI exposes the same registration through an optional sidecar:
+
+```bash
+./target/release/illustrate examples/sample.pdb --width 800 --height 600 \
+  --output output/frame.webp --metadata output/frame.json
+```
+
+The JSON contains `{"canvas":[800,600],"crop_origin":[left,top]}`, where `left` and `top`
+are integer pixel offsets from the original canvas's top-left corner, including the retained
+padding. Paste the decoded image without scaling at `[left, top]` on an 800 x 600 canvas to
+restore its original placement. Initialize the canvas with transparency for RGBA images, or
+the scene background for opaque images. Keep scene framing consistent across frames.
+Trimming remains unconditional; metadata does not change image pixels or dimensions. Metadata
+must use a different path from the structural input, scene settings, and image. A sidecar write
+failure returns a nonzero status; an image saved before that failure may already exist.
+
 Run `cargo doc --no-deps --locked --open` to browse the public API. `Scene` owns prepared spheres;
 rendering does not reread the input. Diagnostics are retained on the prepared scene and printed
 by the CLI.

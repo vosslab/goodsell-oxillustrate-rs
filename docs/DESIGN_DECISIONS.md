@@ -166,6 +166,23 @@ version: PNG supplies a lossless transparent raster for the user's publishing ap
 **Owner.** [settings.rs](../src/settings.rs), [render.rs](../src/render.rs),
 [rendered_image.rs](../src/rendered_image.rs), and [USAGE.md](USAGE.md).
 
+### Cropped frame registration
+
+**Decision.** Preserve unconditional trimming and the existing `render` API. Add
+`render_with_bounds` returning the same owned image plus `[left, top]` from the native crop.
+Optional CLI `--metadata PATH` writes `canvas: [width, height]` and `crop_origin: [left, top]`.
+
+**Why.** Animation consumers need exact canvas registration after trimming. Reusing the actual
+crop bounds avoids recentering drift and repeated geometry or alpha-bound calculations.
+
+**Consequence.** Consumers restore placement by pasting at the reported origin without scaling,
+using the declared canvas and a consistent scene framing. Image types, pixels, defaults, and
+struct-literal callers remain compatible. Sidecar errors fail the command; a saved image can
+already exist because image and metadata are separate files.
+
+**Owner.** [render.rs](../src/render.rs), [command_line.rs](../src/command_line.rs), and
+[USAGE.md](USAGE.md).
+
 ### Direct RCSB coordinate loading
 
 **Decision.** `--pdb ID` and `load_pdb` fetch mmCIF from a fixed RCSB HTTPS endpoint. Use the

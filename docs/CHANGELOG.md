@@ -4,6 +4,10 @@
 
 ### Additions and New Features
 
+- Add `render_with_bounds` and optional CLI `--metadata PATH` for exact fixed-canvas frame
+  registration after unconditional trimming. Report original `[width, height]` and native
+  `[left, top]` crop origin; preserve `render`, `RenderedImage`, existing pixels, and defaults.
+  Protect metadata from overwriting structural inputs, scene settings, or the image.
 - Add native print resolution through `--dpi` and JSON `dpi`, defaulting to 300. Carry DPI
   through the public settings, scene, and image types. PNG writes physical pixel dimensions
   and sRGB; lossless WebP writes EXIF X/Y resolution and inch units. Use the existing transitive
@@ -113,6 +117,18 @@
 
 ### Developer Tests and Notes
 
+- Crop registration passes `cargo fmt --check`, `cargo check --locked --all-targets`,
+  `cargo test --locked` (44 unit, 9 integration, 1 doctest),
+  `cargo clippy --locked --all-targets -- -D warnings`, `cargo build --locked --release`, and
+  `RUSTDOCFLAGS='-D warnings -D missing_docs' cargo doc --no-deps --locked` on
+  rustc/Cargo 1.99.1, aarch64-apple-darwin. Independent asymmetric sphere coverage reconstructs
+  exactly from `[left, top]`; opaque white atoms retain matching bounds. CLI WebP pixels match
+  the library, and conflicting destinations preserve input/image files. Repository
+  `source source_me.sh && python3 -m pytest tests/ -q` passes all 1017 checks. Native release
+  probe `examples/sample.pdb --width 100 --height 80 --output
+  output/crop_registration/sample.webp --metadata output/crop_registration/sample.json`
+  produces a 31 x 28 image with `canvas: [100, 80]`, `crop_origin: [33, 25]`.
+  No movie, browser, Linux, or Fortran-oracle validation is repeated for this additive API.
 - Full transparent recapture passes 1017 repository checks and five temporary image/reference
   checks, removed afterward. Every WebP has RGBA, partial-alpha outlines, EXIF 300 dpi, and a
   live embed; regenerated PNG counterparts have identical decoded pixels. Inspect all twelve
