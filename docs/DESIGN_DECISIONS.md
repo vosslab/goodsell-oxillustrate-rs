@@ -21,3 +21,21 @@ authoritative code or contract document, rather than a person.
 
 **Owner.** <the authoritative code or contract doc>
 ```
+
+### Native licensing and reference lifetime
+
+**Decision.** Implement the documented mathematics and behavior as new native Rust code under
+[LICENSE.AGPL-3.0](../LICENSE.AGPL-3.0), with scientific attribution in [NOTICE](../NOTICE).
+The legacy Fortran is a temporary development reference and comparison oracle.
+
+**Why.** The user's 2026-11-11 amendment specifies an AGPL reimplementation and deletion of the
+old code when done. The reference was inspected; this is not a clean-room claim.
+
+**Consequence.** After final fidelity evidence, delete legacy source and compiled copies,
+including oracle output copies. Preserve images, hashes, commands, and provenance. Developer
+regeneration may fetch a temporary upstream snapshot; end users need no legacy code or Fortran.
+If copied upstream code is ever distributed, preserve its applicable license and notices.
+
+**Owner.** The dated amendment in
+[goodsell_native.md](active_plans/active/goodsell_native.md) and
+[oxillustrate/Cargo.toml](../oxillustrate/Cargo.toml).
