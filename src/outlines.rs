@@ -163,6 +163,7 @@ mod tests {
         let scene = Scene {
             width: 9,
             height: 9,
+            dpi: 300,
             spheres: vec![sphere.clone(), sphere],
             background: Some([1.0; 3]),
             fog: FogSettings::default(),

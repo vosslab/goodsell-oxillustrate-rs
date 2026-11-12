@@ -24,10 +24,12 @@ pub struct Sphere {
 #[derive(Clone, Debug, PartialEq)]
 /// Prepared orthographic geometry and appearance for synchronous rendering.
 pub struct Scene {
-    /// Raster width in pixels.
+    /// Render canvas width in pixels, before content trimming.
     pub width: u32,
-    /// Raster height in pixels.
+    /// Render canvas height in pixels, before content trimming.
     pub height: u32,
+    /// Print resolution in pixels per inch, preserved in the rendered image.
+    pub dpi: u32,
     /// Visible atom instances as projected spheres.
     pub spheres: Vec<Sphere>,
     /// Opaque background RGB components, or None for a transparent background.

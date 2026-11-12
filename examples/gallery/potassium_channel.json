@@ -1,7 +1,6 @@
 {
   "width": 1200,
   "height": 750,
-  "background": [1, 1, 1],
   "assembly": "1",
   "orientation": [0, -21, 0],
   "atom_rules": [

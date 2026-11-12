@@ -127,6 +127,7 @@ fn validate(scene: &Scene) -> Result<(usize, f64), Error> {
     let settings = SceneSettings {
         width: scene.width,
         height: scene.height,
+        dpi: scene.dpi,
         background: scene.background,
         fog: scene.fog.clone(),
         shadows: scene.shadows.clone(),
@@ -195,6 +196,7 @@ mod tests {
         Scene {
             width: 7,
             height: 5,
+            dpi: 300,
             spheres,
             background: Some([1.0; 3]),
             fog: FogSettings::default(),

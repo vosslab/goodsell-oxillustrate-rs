@@ -45,6 +45,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut shaded = Vec::new();
     let mut outline = Vec::new();
     let mut final_pixels = Vec::new();
+    let mut alpha = scene.background.is_none().then(Vec::new);
+    let mut bounds = [scene.height as usize, scene.width as usize, 0, 0];
     let shading = shading::Shading::new(&scene, &buffer);
     let pass_start = Instant::now();
     for row in 0..scene.height as usize {
@@ -54,6 +56,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             writeln!(depth, "{:.12} {owner}", buffer.depth[index])?;
             mask.extend([if owner == 0 { 255 } else { 0 }; 3]);
             let opacity = outlines::opacity(&scene, &buffer, row, col);
+            if owner != 0 || opacity > 0.0 {
+                bounds[0] = bounds[0].min(row);
+                bounds[1] = bounds[1].min(col);
+                bounds[2] = bounds[2].max(row + 1);
+                bounds[3] = bounds[3].max(col + 1);
+            }
+            if let Some(alpha) = &mut alpha {
+                alpha.push(if owner != 0 {
+                    255
+                } else {
+                    (opacity * 255.0).ceil() as u8
+                });
+            }
             outline.extend([(opacity * 255.0).trunc().clamp(0.0, 255.0) as u8; 3]);
             for channel in shading.color(row, col) {
                 shaded.push((channel * 255.0).trunc().clamp(0.0, 255.0) as u8);
@@ -66,7 +81,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     let passes = pass_start.elapsed().as_secs_f64();
-    if final_pixels != rendered.pixels {
+    let top = bounds[0].saturating_sub(3);
+    let left = bounds[1].saturating_sub(3);
+    let height = (bounds[2] + 3).min(scene.height as usize) - top;
+    let width = (bounds[3] + 3).min(scene.width as usize) - left;
+    if (rendered.width as usize, rendered.height as usize) != (width, height)
+        || (0..height).any(|row| {
+            let start = ((row + top) * scene.width as usize + left) * 3;
+            final_pixels[start..start + width * 3]
+                != rendered.pixels[row * width * 3..(row + 1) * width * 3]
+        })
+    {
         return Err("diagnostic pass composition differs from production render".into());
     }
     for (name, pixels) in [
@@ -78,12 +103,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         RenderedImage {
             width: scene.width,
             height: scene.height,
+            dpi: scene.dpi,
             pixels,
-            alpha: if name == "image" {
-                rendered.alpha.clone()
-            } else {
-                None
-            },
+            alpha: if name == "image" { alpha.clone() } else { None },
         }
         .save_png(output.join(format!("{name}.png")))?;
     }

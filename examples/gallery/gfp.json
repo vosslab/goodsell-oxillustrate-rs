@@ -1,7 +1,6 @@
 {
   "width": 1200,
   "height": 750,
-  "background": [1, 1, 1],
   "orientation": [0, 0, 30],
   "atom_rules": [
     {"selector": {"chain": {"id": "A"}}, "color": [0.52, 0.79, 0.47]},

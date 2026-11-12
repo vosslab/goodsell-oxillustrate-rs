@@ -2,6 +2,5 @@
   "width": 1600,
   "height": 1000,
   "assembly": "1",
-  "background": [1, 1, 1],
   "outlines": {"kernel": 3}
 }

@@ -24,10 +24,15 @@ struct Arguments {
     /// JSON scene settings; explicit command-line flags take precedence.
     #[arg(long)]
     scene: Option<PathBuf>,
+    /// Render canvas width in pixels, before trimming; default 800.
     #[arg(long)]
     width: Option<u32>,
+    /// Render canvas height in pixels, before trimming; default 800.
     #[arg(long)]
     height: Option<u32>,
+    /// Print resolution in pixels per inch; default 300, without resampling.
+    #[arg(long)]
+    dpi: Option<u32>,
     #[arg(long)]
     model: Option<i32>,
     #[arg(long)]
@@ -69,6 +74,9 @@ pub fn run() -> Result<(), Error> {
     if let Some(height) = arguments.height {
         settings.height = height;
     }
+    if let Some(dpi) = arguments.dpi {
+        settings.dpi = dpi;
+    }
     if let Some(model) = arguments.model {
         settings.model = Some(model);
     }
@@ -92,7 +100,17 @@ pub fn run() -> Result<(), Error> {
     for diagnostic in &scene.diagnostics {
         eprintln!("illustrate: {diagnostic}");
     }
-    oxillustrate::render(&scene)?.save(&arguments.output)
+    let image = oxillustrate::render(&scene)?;
+    image.save(&arguments.output)?;
+    eprintln!(
+        "illustrate: {} x {} pixels at {} dpi; print size {:.2} x {:.2} inches",
+        image.width,
+        image.height,
+        image.dpi,
+        f64::from(image.width) / f64::from(image.dpi),
+        f64::from(image.height) / f64::from(image.dpi)
+    );
+    Ok(())
 }
 
 fn protect_input(output: &Path, input: &Path) -> Result<(), Error> {

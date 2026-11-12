@@ -146,6 +146,26 @@ Rust callers provide `Some(rgb)` for opaque backgrounds and `alpha: None` for op
 [rendered_image.rs](../src/rendered_image.rs). Encoder capabilities:
 [image WebP encoder](https://docs.rs/image/latest/image/codecs/webp/struct.WebPEncoder.html).
 
+### Print resolution and content trimming
+
+**Decision.** Default to 300 dpi and trim the finished image to atom/outline coverage with three
+pixels of available padding. Expose `--dpi`; JSON remains optional and can save DPI alongside
+appearance settings. Trimming is unconditional. Keep one JSON scene format and native PNG/WebP.
+
+**Why.** Print placement needs resolution metadata and enough raster pixels. Coverage-based
+trimming retains white atoms on white backgrounds and faint alpha outlines. Existing pixel
+dimensions already express print size without another units parser or resampling stage. The
+user's correction removes the trim toggle: adding whitespace afterward is easy.
+
+**Consequence.** DPI is metadata, independent of pixel count and molecular scale. Final dimensions
+can be smaller than the requested canvas; page margins are added afterward. PNG writes pHYs
+resolution and sRGB; WebP writes EXIF inch resolution. Diagnostic/reference passes keep full
+canvas coordinates. SVG, YAML, PDF, CMYK separation, and bleed/page layout are outside this
+version: PNG supplies a lossless transparent raster for the user's publishing application.
+
+**Owner.** [settings.rs](../src/settings.rs), [render.rs](../src/render.rs),
+[rendered_image.rs](../src/rendered_image.rs), and [USAGE.md](USAGE.md).
+
 ### Direct RCSB coordinate loading
 
 **Decision.** `--pdb ID` and `load_pdb` fetch mmCIF from a fixed RCSB HTTPS endpoint. Use the

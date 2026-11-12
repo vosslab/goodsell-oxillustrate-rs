@@ -1,5 +1,9 @@
 # Poster-inspired gallery capture
 
+The subsequent default-trimming update regenerates all eight previews. Current image dimensions
+and hashes are recorded in [print_trim.md](print_trim.md); earlier receipts below retain their
+original dimensions.
+
 Captured 2026-11-12 on macOS arm64 using the current native release binary.
 [GALLERY.md](../../GALLERY.md) is linked from the root README and gives a biological caption,
 PDB source, scene-file selection, and working native CLI command for every image.

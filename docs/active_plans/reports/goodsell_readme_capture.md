@@ -1,5 +1,9 @@
 # Molecular illustration documentation captures
 
+The later DPI/content-trimming implementation regenerates these images with three pixels of
+padding. Current dimensions, hashes, and verification are in [print_trim.md](print_trim.md).
+The dated receipts below describe the earlier captures.
+
 ## Transparency and contour correction
 
 The user's 2026-11-12 review identified two misleading examples. The asset named

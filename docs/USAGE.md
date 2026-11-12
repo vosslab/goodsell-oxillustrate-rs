@@ -10,10 +10,12 @@ mkdir -p output
 ./target/release/illustrate examples/sample.pdb --output output/sample.png
 ```
 
-The original synthetic four-atom example writes an 800 x 800 image with automatic framing and warm chain colors,
+The original synthetic four-atom example uses an 800 x 800 canvas with automatic framing and warm chain colors,
 conical shadows, and contour, subunit, and residue outlines. Its background is transparent.
 Native defaults hide H, D, and water
 and retain other hetero atoms. The first model in source order is selected.
+Output is trimmed to the molecule and its outlines, with three pixels of padding where the
+canvas allows. Add any page margins or whitespace in your slide or publishing application.
 
 Replace the sample with your local structure path, or use the public hemoglobin example:
 
@@ -22,8 +24,10 @@ Replace the sample with your local structure path, or use the public hemoglobin 
   --scene examples/hemoglobin.json
 ```
 
-[hemoglobin.json](../examples/hemoglobin.json) specifies a 922 x 750 image, source-style
+[hemoglobin.json](../examples/hemoglobin.json) specifies a 922 x 750 canvas, source-style
 orientation and ordered pink/peach protein and red-heme rules.
+This reference scene fixes `framing.scale` at 12 pixels per Angstrom. Remove that field when
+editing it for automatic fitting to a larger print canvas.
 
 ## Transparency and output format
 
@@ -41,15 +45,15 @@ In JSON, `"background": null` means transparent; an RGB triple such as `[1,1,1]`
 Existing RGB-background scene files keep their appearance. Atom surfaces remain opaque;
 outline-only pixels carry black with fractional alpha, avoiding a white fringe when composited.
 Depth fog still uses the scene's explicit fog color; transparency does not recolor molecular atoms.
-In a browser, transparent areas show the page background. The hemoglobin image below has real
-alpha, with no colored background or checkerboard baked into the file.
+In a browser, transparent areas show the page background. All bundled scenes and documentation
+images have real alpha, with no colored background or checkerboard baked into the files.
 
 ## More molecular examples
 
 These images were rendered by the same `illustrate` program. The first shows lambda repressor
 bound to DNA (PDB 1LMB), with colors distinguishing the chains. The second shows the complete
 biological assembly 1 of cowpea chlorotic mottle virus (PDB 1CWP), using lighter contour settings.
-The last image is hemoglobin on a transparent background; its surroundings follow the page color.
+All three images have transparent backgrounds; their surroundings follow the page color.
 
 <!-- screenshots:begin (managed by screenshot-docs) -->
 ![Lambda repressor bound to DNA, with different colors for each chain](screenshots/lambda_dna.webp)
@@ -61,7 +65,7 @@ Download the coordinates and make the images:
 
 ```bash
 mkdir -p output
-./target/release/illustrate --pdb 1lmb --background white --output output/lambda_dna.png \
+./target/release/illustrate --pdb 1lmb --output output/lambda_dna.png \
   --width 960 --height 600
 ./target/release/illustrate --pdb 1cwp --scene examples/cowpea_capsid.json \
   --output output/cowpea_capsid.png
@@ -69,7 +73,8 @@ mkdir -p output
   --background transparent --output output/hemoglobin_transparent.webp
 ```
 
-The first two commands produce 960 x 600 and 1600 x 1000 PNGs, respectively. The virus scene
+The first two commands use 960 x 600 and 1600 x 1000 canvases, respectively; the final PNGs are
+cropped to content. The virus scene
 selects assembly 1 to build the complete capsid from the deposited coordinates and assembly
 operations. That choice is saved in [cowpea_capsid.json](../examples/cowpea_capsid.json).
 
@@ -85,7 +90,8 @@ illustrate [INPUT | --pdb ID] --output <OUTPUT> [OPTIONS]
 | `--output`, `-o` | Required destination `.png` or `.webp` filename |
 | `--background` | Override JSON with `transparent`, `white`, or `black` |
 | `--scene` | Read partial scene settings from a JSON file |
-| `--width`, `--height` | Override image dimensions in pixels |
+| `--width`, `--height` | Override render canvas dimensions in pixels, before trimming |
+| `--dpi` | Print resolution in pixels per inch; default 300; does not resample |
 | `--model` | Select a positive deposited model number |
 | `--assembly` | Select an assembly ID defined by the input |
 | `--help`, `--version` | Show command help or package version |
@@ -98,15 +104,49 @@ assembly selection requires metadata in the input. For example:
   --assembly 1 --width 1000 --height 1000
 ```
 
+## Printing and content trimming
+
+Use PNG for a print-layout workflow. Both native formats are lossless and preserve transparency.
+PNG records resolution in its standard
+[physical pixel dimensions](https://www.w3.org/TR/png/#11pHYs) metadata; WebP records X/Y resolution
+and inch units in [EXIF metadata](https://developers.google.com/speed/webp/docs/riff_container#metadata).
+PNG also identifies its colors as sRGB. Programs may choose their own placement size, so check
+the dimensions when inserting an image into your poster or document.
+
+Print width in inches is final pixel width divided by DPI. For example, 2400 output pixels at
+300 dpi spans 8 inches. To prepare a larger image, render on a 2400 x 1800 canvas:
+
+```bash
+./target/release/illustrate --pdb 1lmb --width 2400 --height 1800 --dpi 300 \
+  --output output/protein_print.png
+```
+
+Output is always cropped to content. The CLI reports the final pixel dimensions
+and physical size after saving. Cropping happens after all rendering passes, retains even faint
+outline pixels, and leaves three pixels of available padding. It uses atom and outline coverage,
+so atoms matching a white or black background are retained. Pixel colors and alpha are copied
+without resizing. A molecule already touching a canvas edge has less padding there.
+
+DPI metadata alone adds no detail: choose more pixels for a larger or sharper print. Increasing
+the canvas dimensions provides more pixels when using automatic framing; an explicit
+`framing.scale` fixes the molecular scale in pixels per Angstrom. The existing canvas limit is
+16,777,216 pixels. Trimming can change the aspect ratio and printed size. Add any whitespace
+afterward in your publishing application. PNG/WebP remain RGB formats; CMYK conversion and page layout
+belong in your publishing application. SVG is outside this per-pixel renderer.
+
 ## Scene settings
 
-JSON may provide only changed fields; unknown keys are errors. For example, save this as a scene
+JSON is optional and may provide only changed fields; unknown keys are errors. Everyday size,
+resolution, background, and assembly controls are available on the CLI. Keep detailed coloring,
+orientation, shadows, and outline choices in JSON. YAML is not supported.
+For example, save this as a scene
 file and pass its path with `--scene`:
 
 ```json
 {
   "width": 1000,
   "height": 800,
+  "dpi": 300,
   "orientation": [0, 0, 90],
   "fog": {"front": 1, "back": 0.5}
 }
@@ -156,7 +196,9 @@ fn main() -> Result<(), oxillustrate::Error> {
 
 Replace `load_structure("structure.cif")` with `oxillustrate::load_pdb("1lmb")` to download by ID.
 `RenderedImage.pixels` holds RGB bytes; its optional `alpha` vector holds one straight-alpha byte
-per pixel. `save` selects the encoder by extension; `save_png` and `save_webp` select it explicitly.
+per pixel. `RenderedImage.dpi` holds print resolution. The returned width/height are the cropped
+dimensions. `save` selects the encoder by extension;
+`save_png` and `save_webp` select it explicitly.
 Run `cargo doc --no-deps --locked --open` to browse the public API. `Scene` owns prepared spheres;
 rendering does not reread the input. Diagnostics are retained on the prepared scene and printed
 by the CLI.

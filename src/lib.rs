@@ -16,6 +16,7 @@
 //! Input supports PDB, PDBx/mmCIF, and PDBML XML, optionally gzip compressed.
 //! [`load_pdb`] downloads mmCIF coordinates from RCSB by accession without saving an input file.
 //! PNG and lossless WebP preserve alpha; an explicit background color selects opaque output.
+//! Images default to 300 dpi with three pixels of padding after content trimming.
 //! [`SceneSettings`] supplies validated defaults and JSON-deserializable appearance controls.
 //! [`Scene`] owns its prepared spheres; rendering requires no further file reads.
 #![forbid(unsafe_code)]

@@ -305,6 +305,7 @@ dependencies = [
  "flate2",
  "image",
  "pdbtbx",
+ "png",
  "quick-xml",
  "serde",
  "serde_json",

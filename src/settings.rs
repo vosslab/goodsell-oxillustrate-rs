@@ -9,10 +9,12 @@ pub const MAX_PIXELS: usize = 16_777_216;
 #[serde(default, deny_unknown_fields)]
 /// JSON-deserializable scene configuration; call validate before preparing a scene.
 pub struct SceneSettings {
-    /// Output width in pixels.
+    /// Render canvas width in pixels, before content trimming.
     pub width: u32,
-    /// Output height in pixels.
+    /// Render canvas height in pixels, before content trimming.
     pub height: u32,
+    /// Print resolution in pixels per inch; does not resample the raster.
+    pub dpi: u32,
     /// Deposited model number; absent selects the first available model.
     pub model: Option<i32>,
     /// Biological assembly ID; absent uses deposited coordinates.
@@ -40,6 +42,7 @@ impl Default for SceneSettings {
         Self {
             width: 800,
             height: 800,
+            dpi: 300,
             model: None,
             assembly: None,
             orientation: [0.0; 3],
@@ -268,6 +271,7 @@ impl SceneSettings {
     /// non-finite or out-of-range values, invalid thresholds, or malformed rules.
     pub fn validate(&self) -> Result<(), Error> {
         self.pixel_count()?;
+        pixels_per_meter(self.dpi)?;
         if self.model.is_some_and(|model| model <= 0) {
             return invalid("model must be positive");
         }
@@ -347,6 +351,14 @@ impl SceneSettings {
         }
         Ok(())
     }
+}
+
+pub(crate) fn pixels_per_meter(dpi: u32) -> Result<u32, Error> {
+    let density = (f64::from(dpi) / 0.0254).round();
+    if dpi == 0 || density > f64::from(u32::MAX) {
+        return invalid("dpi must be positive and fit PNG physical-resolution metadata");
+    }
+    Ok(density as u32)
 }
 
 fn invalid<T>(message: &str) -> Result<T, Error> {

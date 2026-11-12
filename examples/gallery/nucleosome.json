@@ -1,7 +1,6 @@
 {
   "width": 1200,
   "height": 750,
-  "background": [1, 1, 1],
   "assembly": "1",
   "orientation": [20, 0, 0],
   "outlines": {"kernel": 3},

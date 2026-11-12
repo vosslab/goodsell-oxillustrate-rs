@@ -4,12 +4,20 @@
 
 ### Additions and New Features
 
+- Add native print resolution through `--dpi` and JSON `dpi`, defaulting to 300. Carry DPI
+  through the public settings, scene, and image types. PNG writes physical pixel dimensions
+  and sRGB; lossless WebP writes EXIF X/Y resolution and inch units. Use the existing transitive
+  `png` crate directly for its metadata encoder; no new dependency tree is introduced.
+- Trim rendered output automatically to atoms and outlines with three pixels of available
+  padding. Preserve every pixel value and partial-alpha edge, and report final dimensions/print
+  size on stderr. The initial trim override is removed after the user's simplifying correction.
 - Add [GALLERY.md](GALLERY.md) with eight fresh molecular illustrations selected from the local
   2002 and 2014 Molecular Machinery posters: lysozyme, GFP, antibody, potassium channel, tRNA,
   nucleosome, GroEL/GroES, and rhinovirus. Include biological captions, PDB sources, reusable
   scene files, and native download/render commands. Link the gallery from the README.
-- Add [devel/render_gallery.sh](../devel/render_gallery.sh) to regenerate the eight native PNGs
-  and compact quality-90 WebPs. Keep the two poster PDFs as ignored references; no poster image
+- Add [devel/render_gallery.sh](../devel/render_gallery.sh) to regenerate the eight gallery images;
+  the alpha correction makes these direct native lossless WebPs. Keep the two poster PDFs as
+  ignored references; no poster image
   is copied into the gallery. Each molecule is framed independently, with that scale distinction
   stated on the page.
 - Implement native `--pdb ID` / `load_pdb` RCSB downloads without curl. Fetch mmCIF with a
@@ -28,6 +36,10 @@
 
 ### Behavior or Interface Changes
 
+- Remove explicit white backgrounds from every bundled scene and re-render all twelve molecular
+  documentation images with real alpha. Write native lossless WebPs directly, preserving DPI
+  and outline coverage without converter dependencies. Keep opaque backgrounds available as
+  explicit user choices. The gallery and README now blend into light and dark pages.
 - Default new scenes to transparent. `--background transparent|white|black` overrides JSON;
   JSON null means transparent and existing RGB background triples remain opaque. Rust scene
   backgrounds now use `Option<[f64; 3]>`. Partially covered outline pixels carry black with
@@ -35,6 +47,15 @@
 
 ### Fixes and Maintenance
 
+- Verify all twelve transparent captures over light and dark backgrounds. Their dimensions
+  retain automatic trimming, and their white composites match the previous opaque native PNGs
+  within one byte per channel. The old hash comparison was against already-trimmed captures,
+  not the original full-canvas images. Preserve the oracle background from its source cards
+  independently of the transparent public examples. Update the current capture receipt in
+  [print_trim.md](active_plans/reports/print_trim.md).
+- Update print/size guidance and regenerate all twelve documentation images with automatic
+  trimming. Keep source coordinates, molecular scale, colors, shadows, and outlines unchanged.
+  Keep raw diagnostic/reference passes on their full canvas for depth-coordinate comparisons.
 - Replace the misleading opaque `transparent_backgrounds.webp` comparison with actual native
   RGBA WebP. The usage guide now demonstrates transparency directly against the page background.
 - Isolate the dark whole-capsid appearance to dense depth contours: changing the existing
@@ -64,6 +85,9 @@
 
 ### Removals and Deprecations
 
+- Remove the `--no-trim` flag and `trim` fields from JSON settings and public scene types.
+  Always crop finished renders; add whitespace afterward. Keep raw developer pass exports
+  separate from finished output and verify their cropped pixels against the production renderer.
 - Archive the completed [image_output_downloads.md](archive/image_output_downloads.md) plan
   using `git mv`; retain its implementation and verification evidence in the linked report.
 - The agent-added GitHub Actions workflow is removed; the user does not use GitHub workflows.
@@ -72,6 +96,11 @@
 
 ### Decisions and Failures
 
+- Keep JSON optional; size, DPI, and background remain available through the CLI.
+  Omit YAML, SVG, PDF, CMYK separation, bleed, and a second physical-units sizing interface.
+  Existing pixel dimensions plus DPI provide print sizing in native PNG/WebP. The user
+  explicitly declines SVG for this pixel-by-pixel renderer. Record the decision in
+  [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
 - Use one background selector, native lossless WebP, and a fixed RCSB service without cache,
   arbitrary URLs, or async infrastructure. The suggested vossvolvox-rust repository supplies a
   read-only Python E2E download example; no code or master vendored files there are changed.
@@ -84,6 +113,21 @@
 
 ### Developer Tests and Notes
 
+- Full transparent recapture passes 1017 repository checks and five temporary image/reference
+  checks, removed afterward. Every WebP has RGBA, partial-alpha outlines, EXIF 300 dpi, and a
+  live embed; regenerated PNG counterparts have identical decoded pixels. Inspect all twelve
+  images over both light and dark backgrounds. Application Rust is unchanged in this recapture.
+- After removing trim controls, all 52 Rust tests and 1017 repository checks pass, along with
+  formatting, all-target compilation, Clippy, rustdoc, and the release build. The raw-pass probe
+  verifies cropped production RGB. Hemoglobin's native PNG is byte-identical to its prior
+  cropped output; the larger print command now reports 1352 x 1748 pixels after cropping.
+- Print/trim verification passes formatting, locked all-target compilation, all 52 Rust tests,
+  Clippy with warnings denied, rustdoc with missing docs denied, and 1014 repository pytest
+  checks. Pillow independently reads PNG/WebP resolution and confirms identical RGBA pixels
+  across DPI values. The documented 2400 x 1800 print command succeeds; native crop results
+  match independent alpha/background-bounds trims. Refresh and inspect twelve final WebPs.
+  Current evidence and platform/printing limits are in
+  [print_trim.md](active_plans/reports/print_trim.md).
 - Transparency/contour correction verification passes all 50 Rust tests and 1003 repository
   pytest checks. Five fresh native downloads/renders succeed, all final WebPs are visually
   inspected and decode without errors, and the transparent capture matches native PNG RGBA

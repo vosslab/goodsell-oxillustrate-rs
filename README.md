@@ -28,7 +28,7 @@ mkdir -p output
   --output output/hemoglobin.png
 ```
 
-Open `output/hemoglobin.png` in your image viewer. The 922 x 750 PNG can be inserted into a
+Open `output/hemoglobin.png` in your image viewer. The cropped PNG can be inserted into a
 presentation, poster, or report. After the build, use the same `illustrate` program for new images;
 you do not need Python, a GPU, or a running molecular viewer.
 
@@ -46,7 +46,8 @@ Or use a coordinate file you already have. Replace `your_protein.cif` with its f
 ./target/release/illustrate your_protein.cif --output output/my_protein.png
 ```
 
-These commands create an 800 x 800 image with automatic framing and different chain colors.
+These commands fit the molecule into an 800 x 800 canvas, then trim empty space with three pixels
+of padding. Chain colors help distinguish the components.
 The first model and deposited coordinates are used by default. Waters and hydrogen atoms are
 hidden; other bound molecules are retained. PDBML XML and gzip-compressed coordinate files also work.
 
@@ -60,16 +61,26 @@ Both PNG and WebP preserve transparency. Choose an opaque background when you wa
 ./target/release/illustrate --pdb 1lmb --background black --output output/black.webp
 ```
 
-`--background transparent` overrides a scene file's background color. The hemoglobin scene above
-explicitly sets white. The filename selects PNG or lossless WebP; no conversion program is needed.
+All bundled scenes and documentation images use transparency, so they follow the page background
+in light and dark themes. `--background transparent` also overrides an explicit scene color.
+The filename selects PNG or lossless WebP; no conversion program is needed.
 
 ## Make the figure yours
 
 - Make a larger image with `--width 1600 --height 1200`.
+- Set print resolution with `--dpi 300` (the default). Choose enough pixels for the intended
+  size: 2400 output pixels at 300 dpi spans 8 inches. The CLI reports the final cropped size.
 - Show a biological assembly with `--assembly 1`, when that assembly is defined in the file.
   Deposited coordinates alone may show only part of the complete complex.
 - Set chain colors, highlight a ligand, or rotate the view with a JSON scene file.
   [examples/hemoglobin.json](examples/hemoglobin.json) supplies the settings for the image above.
+
+JSON is optional. For a larger image prepared for printing:
+
+```bash
+./target/release/illustrate --pdb 1lmb --width 2400 --height 1800 --dpi 300 \
+  --output output/protein_print.png
+```
 
 Follow [docs/USAGE.md](docs/USAGE.md) for scene-file examples and command options. It also shows
 rendered examples of lambda repressor bound to DNA and a complete virus capsid, with commands

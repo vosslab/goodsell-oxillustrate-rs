@@ -5,6 +5,7 @@ use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use flate2::{Compression, write::GzEncoder};
+use image::ImageDecoder;
 use oxillustrate::{Error, RenderedImage, SceneSettings};
 
 struct TemporaryDirectory(PathBuf);
@@ -34,12 +35,154 @@ const CIF: &str = "data_test\nloop_\n_atom_site.id\n_atom_site.type_symbol\n_ato
 const XML: &str = "<datablock><atom_siteCategory><atom_site id='1'><type_symbol>C</type_symbol><label_atom_id>CA</label_atom_id><label_comp_id>GLY</label_comp_id><Cartn_x>1</Cartn_x><Cartn_y>2</Cartn_y><Cartn_z>3</Cartn_z></atom_site></atom_siteCategory></datablock>";
 
 #[test]
+fn trimming_keeps_all_coverage_without_resampling_or_using_background_color() {
+    let temporary = TemporaryDirectory::new();
+    let input = temporary.0.join("one.pdb");
+    fs::write(&input, PDB).unwrap();
+    let structure = oxillustrate::load_structure(&input).unwrap();
+    let mut settings = SceneSettings {
+        width: 100,
+        height: 80,
+        ..SceneSettings::default()
+    };
+    settings.framing.scale = Some(8.0);
+    let mut scene = oxillustrate::prepare_scene(&structure, &settings).unwrap();
+    let trimmed = oxillustrate::render(&scene).unwrap();
+    assert!(trimmed.width < settings.width && trimmed.height < settings.height);
+    settings.width += 40;
+    settings.height += 40;
+    let larger_canvas = oxillustrate::prepare_scene(&structure, &settings).unwrap();
+    assert_eq!(trimmed, oxillustrate::render(&larger_canvas).unwrap());
+    let alpha = trimmed.alpha.as_ref().unwrap();
+    let covered: Vec<_> = alpha
+        .iter()
+        .enumerate()
+        .filter(|(_, value)| **value > 0)
+        .map(|(index, _)| {
+            (
+                index % trimmed.width as usize,
+                index / trimmed.width as usize,
+            )
+        })
+        .collect();
+    assert_eq!(covered.iter().map(|p| p.0).min(), Some(3));
+    assert_eq!(covered.iter().map(|p| p.1).min(), Some(3));
+    assert_eq!(
+        covered.iter().map(|p| p.0).max(),
+        Some(trimmed.width as usize - 4)
+    );
+    assert_eq!(
+        covered.iter().map(|p| p.1).max(),
+        Some(trimmed.height as usize - 4)
+    );
+
+    scene.outlines.contour_enabled = false;
+    scene.outlines.subunit_enabled = false;
+    scene.outlines.residue_enabled = false;
+    scene.shadows.enabled = false;
+    scene.spheres[0].color = [1.0; 3];
+    let transparent = oxillustrate::render(&scene).unwrap();
+    scene.background = Some([1.0; 3]);
+    let white_on_white = oxillustrate::render(&scene).unwrap();
+    assert_eq!(
+        (white_on_white.width, white_on_white.height),
+        (transparent.width, transparent.height)
+    );
+    assert!(white_on_white.pixels.iter().all(|value| *value == 255));
+    scene.spheres[0].center[0] = 0.0;
+    let clipped = oxillustrate::render(&scene).unwrap();
+    assert!(clipped.width > 0 && clipped.height > 0);
+}
+
+#[test]
+fn cli_print_metadata_survives_trimming_and_both_encoders() {
+    let temporary = TemporaryDirectory::new();
+    let input = temporary.0.join("one.pdb");
+    let scene = temporary.0.join("scene.json");
+    fs::write(&input, PDB).unwrap();
+    fs::write(
+        &scene,
+        r#"{"width":80,"height":60,"dpi":150,"framing":{"scale":6}}"#,
+    )
+    .unwrap();
+    for extension in ["png", "webp"] {
+        let output = temporary.0.join(format!("print.{extension}"));
+        let result = Command::new(env!("CARGO_BIN_EXE_illustrate"))
+            .arg(&input)
+            .arg("--scene")
+            .arg(&scene)
+            .arg("--output")
+            .arg(&output)
+            .args(["--dpi", "600"])
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert!(String::from_utf8_lossy(&result.stderr).contains("pixels at 600 dpi"));
+        let decoded = image::open(&output).unwrap().to_rgba8();
+        assert!(decoded.width() < 80 && decoded.height() < 60);
+        if extension == "png" {
+            let reader =
+                png::Decoder::new(std::io::BufReader::new(fs::File::open(&output).unwrap()))
+                    .read_info()
+                    .unwrap();
+            let density = reader.info().pixel_dims.unwrap();
+            assert_eq!(density.unit, png::Unit::Meter);
+            assert!((f64::from(density.xppu) * 0.0254 - 600.0).abs() < 0.013);
+            assert_eq!(density.xppu, density.yppu);
+            assert!(reader.info().srgb.is_some());
+        } else {
+            let mut decoder = image::codecs::webp::WebPDecoder::new(std::io::BufReader::new(
+                fs::File::open(&output).unwrap(),
+            ))
+            .unwrap();
+            let exif = decoder.exif_metadata().unwrap().unwrap();
+            assert_eq!(&exif[..4], b"II\x2a\0");
+            let read_u32 =
+                |offset| u32::from_le_bytes(exif[offset..offset + 4].try_into().unwrap());
+            let ifd = read_u32(4) as usize;
+            let count = u16::from_le_bytes(exif[ifd..ifd + 2].try_into().unwrap()) as usize;
+            let mut tags = Vec::new();
+            for index in 0..count {
+                let entry = ifd + 2 + index * 12;
+                let tag = u16::from_le_bytes(exif[entry..entry + 2].try_into().unwrap());
+                let value = read_u32(entry + 8);
+                if tag == 0x011a || tag == 0x011b {
+                    assert_eq!(read_u32(value as usize), 600 * read_u32(value as usize + 4));
+                } else if tag == 0x0128 {
+                    assert_eq!(value, 2);
+                }
+                tags.push(tag);
+            }
+            assert!(tags.contains(&0x011a) && tags.contains(&0x011b) && tags.contains(&0x0128));
+        }
+        let original = fs::read(&output).unwrap();
+        for dpi in ["0", "4294967295"] {
+            let result = Command::new(env!("CARGO_BIN_EXE_illustrate"))
+                .arg(&input)
+                .arg("--output")
+                .arg(&output)
+                .args(["--dpi", dpi])
+                .output()
+                .unwrap();
+            assert!(!result.status.success());
+            assert!(String::from_utf8_lossy(&result.stderr).contains("dpi must be positive"));
+            assert_eq!(fs::read(&output).unwrap(), original);
+        }
+    }
+}
+
+#[test]
 fn cli_renders_all_input_formats_and_flags_override_json() {
     let temporary = TemporaryDirectory::new();
     let scene = temporary.0.join("scene.json");
     fs::write(&scene, r#"{"width":0,"height":0,"framing":{"scale":4}}"#).unwrap();
     let mut compressed = GzEncoder::new(Vec::new(), Compression::default());
     compressed.write_all(CIF.as_bytes()).unwrap();
+    let mut reference = None;
     for (name, bytes) in [
         ("one.pdb", PDB.as_bytes().to_vec()),
         ("one.cif", CIF.as_bytes().to_vec()),
@@ -65,8 +208,13 @@ fn cli_renders_all_input_formats_and_flags_override_json() {
         );
         assert!(result.stdout.is_empty());
         let image = image::open(&output).unwrap().to_rgb8();
-        assert_eq!(image.dimensions(), (32, 28));
+        assert!(image.width() <= 32 && image.height() <= 28);
         assert!(image.pixels().any(|pixel| pixel.0 != [255; 3]));
+        if let Some(expected) = &reference {
+            assert_eq!(&image, expected);
+        } else {
+            reference = Some(image);
+        }
     }
 }
 
@@ -93,6 +241,7 @@ fn api_renders_and_rejects_invalid_images_without_replacing_output() {
         RenderedImage {
             width: 2,
             height: 2,
+            dpi: 300,
             pixels: vec![0; 3],
             alpha: None,
         }
@@ -106,6 +255,7 @@ fn api_renders_and_rejects_invalid_images_without_replacing_output() {
         RenderedImage {
             width: 1,
             height: 1,
+            dpi: 300,
             pixels: vec![0; 3],
             alpha: None,
         }
@@ -237,6 +387,7 @@ fn transparent_formats_preserve_alpha_and_composite_without_a_matte() {
     let too_wide = RenderedImage {
         width: 16385,
         height: 1,
+        dpi: 300,
         pixels: vec![0; 16385 * 3],
         alpha: None,
     };

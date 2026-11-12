@@ -8,6 +8,16 @@ origin belongs there too. Rules: [REPO_STYLE.md](REPO_STYLE.md).
 [PROPAGATED HEADER - ENTRIES BELOW ARE YOURS]
 <!-- VENDORED HEADER: END -->
 
+- 2026-11-12: Use alpha transparency for repository illustrations so they blend into GitHub
+  Markdown pages; do not force white backgrounds in the example scenes.
+
+- 2026-11-12: Keep content trimming unconditional. A trim/no-trim option is unnecessary;
+  adding whitespace afterward is easy.
+
+- 2026-11-12: Add DPI control and print support. Automatically crop to the rendered content,
+  like a trim operation, with a few pixels of padding for antialiasing. Exclude SVG if rendering
+  requires pixel-by-pixel calculations.
+
 - 2026-11-12: Transparent image examples should show the browser page background. The colored
   comparison named transparent_backgrounds.webp was confusing; the cowpea capsid and some
   other molecules look too dark and insufficiently Goodsell-like. Investigate the parameters.

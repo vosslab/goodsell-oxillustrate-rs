@@ -90,6 +90,7 @@ mod tests {
         Scene {
             width: 111,
             height: 111,
+            dpi: 300,
             spheres: vec![Sphere {
                 center: [0.0; 3],
                 radius: 1.0,

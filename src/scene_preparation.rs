@@ -345,6 +345,7 @@ pub fn prepare_scene(structure: &Structure, settings: &SceneSettings) -> Result<
     Ok(Scene {
         width: settings.width,
         height: settings.height,
+        dpi: settings.dpi,
         spheres,
         background: settings.background,
         fog: settings.fog.clone(),

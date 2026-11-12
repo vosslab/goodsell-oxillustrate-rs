@@ -3,7 +3,8 @@
 use crate::shading::Shading;
 use crate::{Error, RenderedImage, Scene, outlines, raster};
 
-/// Render geometry into top-to-bottom RGB bytes and optional straight alpha.
+/// Render geometry into content-trimmed RGB bytes and optional straight alpha.
+/// Trimming retains every atom/outline pixel plus three pixels of available canvas padding.
 ///
 /// # Errors
 /// Returns `Error::EmptyScene` if no sphere covers the image and `Error::Allocation` if
@@ -32,10 +33,18 @@ pub fn render(scene: &Scene) -> Result<RenderedImage, Error> {
         None
     };
     let shading = Shading::new(scene, &buffer);
+    // Bounds use coverage, so atoms matching an opaque background are still retained.
+    let mut bounds = [scene.height as usize, scene.width as usize, 0, 0];
     for row in 0..scene.height as usize {
         for column in 0..scene.width as usize {
             let opacity = outlines::opacity(scene, &buffer, row, column);
             let occupied = buffer.atom_index[row * scene.width as usize + column].is_some();
+            if occupied || opacity > 0.0 {
+                bounds[0] = bounds[0].min(row);
+                bounds[1] = bounds[1].min(column);
+                bounds[2] = bounds[2].max(row + 1);
+                bounds[3] = bounds[3].max(column + 1);
+            }
             if let Some(mask) = &mut alpha {
                 // Ceil preserves the existing truncated RGB compositor over white.
                 mask.push(if occupied {
@@ -53,9 +62,32 @@ pub fn render(scene: &Scene) -> Result<RenderedImage, Error> {
             }
         }
     }
+    bounds[0] = bounds[0].saturating_sub(3);
+    bounds[1] = bounds[1].saturating_sub(3);
+    bounds[2] = (bounds[2] + 3).min(scene.height as usize);
+    bounds[3] = (bounds[3] + 3).min(scene.width as usize);
+    let width = (bounds[3] - bounds[1]) as u32;
+    let height = (bounds[2] - bounds[0]) as u32;
+    if width != scene.width || height != scene.height {
+        let crop = |bytes: &[u8], channels: usize| -> Result<Vec<u8>, Error> {
+            let row_bytes = width as usize * channels;
+            let mut cropped = Vec::new();
+            cropped
+                .try_reserve_exact(row_bytes * height as usize)
+                .map_err(|_| allocation_error())?;
+            for row in bounds[0]..bounds[2] {
+                let start = (row * scene.width as usize + bounds[1]) * channels;
+                cropped.extend_from_slice(&bytes[start..start + row_bytes]);
+            }
+            Ok(cropped)
+        };
+        pixels = crop(&pixels, 3)?;
+        alpha = alpha.as_deref().map(|bytes| crop(bytes, 1)).transpose()?;
+    }
     Ok(RenderedImage {
-        width: scene.width,
-        height: scene.height,
+        width,
+        height,
+        dpi: scene.dpi,
         pixels,
         alpha,
     })

@@ -12,7 +12,7 @@ and error types; dependency-specific parser objects remain private.
 local PDB / mmCIF / PDBML (+ gzip)
   -> load_structure -> Structure
   -> prepare_scene + SceneSettings -> Scene
-  -> render -> RenderedImage -> save_png
+  -> render + coverage trim -> RenderedImage -> save (PNG / WebP)
 ```
 
 [src/command_line.rs](../src/command_line.rs) reads JSON, applies explicit flag overrides, protects
@@ -36,14 +36,17 @@ input paths, prints scene diagnostics, and invokes the same library operations u
 | [src/shading.rs](../src/shading.rs) | Conical shadow sampling and depth fog |
 | [src/outlines.rs](../src/outlines.rs) | Independent contour, subunit, and residue opacity passes |
 | [src/pdb_download.rs](../src/pdb_download.rs) | Validated RCSB accession, bounded synchronous HTTPS, owned mmCIF parsing |
-| [src/render.rs](../src/render.rs) | RGB composition with optional straight alpha for transparent backgrounds |
-| [src/rendered_image.rs](../src/rendered_image.rs) | PNG/lossless WebP encoding and atomic destination replacement |
+| [src/render.rs](../src/render.rs) | RGB/alpha composition and coverage-based content trimming |
+| [src/rendered_image.rs](../src/rendered_image.rs) | PNG/lossless WebP encoding, DPI metadata, and atomic replacement |
 
 ## Contracts and corrections
 
 Source coordinates use x=row/down, y=column/right, and z=toward viewer. Assembly products act
 rightmost first; author and label identifiers remain distinct. Scene preparation converts molecular
 Angstrom coordinates and radii to image pixels before rendering.
+DPI travels with settings, scene, and the owned image; it describes print size without changing
+projection or resampling. Trimming follows composition, includes atom and outline coverage, and
+copies pixels with three pixels of available padding. Diagnostic probes keep a fixed full canvas.
 
 [REFERENCE_SPEC.md](REFERENCE_SPEC.md) records source equations. Native D1 initializes undefined
 source scratch/background state and handles flat-depth fog. D3 uses physical radius plus one

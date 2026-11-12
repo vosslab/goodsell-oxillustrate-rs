@@ -6,6 +6,9 @@ These new renders take their subjects and restrained colors from David S. Goodse
 
 Each image is fitted independently; the molecules are **not shown at a common physical scale**.
 Colors identify chains or molecular components, as described below. Water and hydrogen are hidden.
+The renderer trims unused canvas space, leaving three pixels of padding. Native exports default
+to 300 dpi; change this with `--dpi`. Add any page margins afterward.
+Use the commands to generate print images; the previews here are native lossless WebPs with alpha.
 
 Follow [INSTALL.md](INSTALL.md) once, then run commands from the repository root. Create an
 output folder before rendering:
@@ -116,12 +119,12 @@ the whole shell. Blue, teal, and violet distinguish the exposed coat proteins; V
 ## Make these figures yours
 
 The scene files in [examples/gallery/](../examples/gallery/) contain the colors, orientations,
-and assembly choices. All eight choose a white background for this page. Override it for slides,
-or choose native WebP simply by changing the output extension:
+and assembly choices. All eight inherit a transparent background, so the figures blend into
+light or dark pages and slides. Choose native WebP simply by changing the output extension:
 
 ```bash
 ./target/release/illustrate --pdb 1aoi --scene examples/gallery/nucleosome.json \
-  --background transparent --output output_gallery/nucleosome.webp
+  --output output_gallery/nucleosome.webp
 ```
 
 Use `--width` and `--height` for a different image size. More options and scene-file guidance
@@ -130,8 +133,8 @@ The nucleosome, GroEL/GroES, and rhinovirus scenes use a smaller contour neighbo
 (`"outlines": {"kernel": 3}`) so dense atomic detail stays lightly outlined at these image sizes.
 
 To refresh all gallery images, run [devel/render_gallery.sh](../devel/render_gallery.sh).
-The refresh helper requires `cwebp` for quality-90 documentation images. It uses the native
-downloader and renderer; the original PNGs remain under ignored `output_gallery/`.
+The refresh helper uses the native downloader and renderer to write lossless WebPs with alpha
+directly. It requires no image converter. Use the individual PNG commands for print exports.
 
 ## Credits
 

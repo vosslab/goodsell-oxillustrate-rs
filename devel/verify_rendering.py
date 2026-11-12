@@ -53,6 +53,9 @@ def scene_settings(reference: pathlib.Path, root: pathlib.Path) -> dict:
 		if 'trans' in lines:
 			settings['translation'] = list(map(float, lines[lines.index('trans') + 1].split(',')))
 	settings['width'], settings['height'] = image.size
+	# Reference cards own the oracle background; gallery scenes inherit transparency.
+	settings['background'] = [float(value) for value in
+		lines[lines.index('wor') + 1].split(',')[:3]]
 	if name.startswith('hemoglobin_'):
 		part = name.removeprefix('hemoglobin_')
 		settings['outlines']['contour_enabled'] = part == 'contour'

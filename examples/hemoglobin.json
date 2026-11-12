@@ -10,11 +10,6 @@
     "scale": 12,
     "margin": 30
   },
-  "background": [
-    1,
-    1,
-    1
-  ],
   "fog": {
     "color": [
       1,
