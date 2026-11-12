@@ -1,96 +1,75 @@
 # goodsell-oxillustrate-rs
 
-Render molecular structures as Goodsell-style illustrations for teaching and scientific communication. A native Rust command-line tool and library turn PDB, mmCIF, or PDBML coordinates into shaded, outlined PNG images.
+Create Goodsell-style protein images for seminar slides, posters, and lab reports. Turn molecular coordinates into PNG figures with soft colors and clear outlines, using a command-line tool.
 
-Space-filling atoms, soft shadows, and selective black outlines make molecular shapes and
-boundaries readable. The hemoglobin example below colors protein chain pairs pink and peach
-and highlights their heme groups in red.
+Show the shape of a protein, distinguish its chains, and highlight bound molecules. Atoms appear
+as space-filling spheres, with shadows and outlines that make molecular boundaries easier to see.
 
 <!-- screenshots:begin (managed by screenshot-docs) -->
-![Native hemoglobin rendering with outlined pastel spheres and red heme groups](docs/screenshots/hemoglobin.webp)
+![Hemoglobin with pink and peach protein chains and red heme groups](docs/screenshots/hemoglobin.webp)
 <!-- screenshots:end -->
 
-## From coordinates to illustration
-
-- Read local PDB, PDBx/mmCIF, and PDBML XML, including gzip-compressed files.
-- Select a deposited model or a biological assembly without losing author and label identifiers.
-- Start with warm chain colors, hidden water and hydrogen, and automatic orthographic framing.
-- Adjust appearance in JSON: ordered atom rules, conical shadows, fog, and three outline passes.
-- Use the same loading, scene preparation, and rendering pipeline from Rust.
+Human hemoglobin, PDB entry 2HHB. Protein chain pairs are pink and peach; heme groups are red.
+The commands below reproduce this image.
 
 ## Quick start
 
-Install Rust 1.99.1 or newer and run these commands from the repository root. The renderer needs
-no Python, Fortran, GPU, or local reference repositories.
+The current version installs from source. You need Rust 1.99.1 or newer with Cargo for the
+one-time build, plus `curl` to download this example. See [docs/INSTALL.md](docs/INSTALL.md)
+for setup. Run these commands from this repository's folder:
 
 ```bash
 cargo build --release --locked
-mkdir -p output
-./target/release/illustrate examples/sample.pdb --output output/sample.png
-```
-
-The example writes an 800 x 800 PNG from original synthetic four-atom geometry. It requires no
-coordinate download; these atoms demonstrate rendering rather than a biological structure.
-See [docs/INSTALL.md](docs/INSTALL.md) for setup and installation verification.
-
-For your own structure, start with automatic framing and an 800 x 800 image:
-
-```bash
-./target/release/illustrate your_structure.cif --output output/structure.png
-```
-
-## Render hemoglobin
-
-Reproduce the illustration above with public RCSB coordinates and the included scene file.
-This example also needs `curl` and network access for the coordinate download:
-
-```bash
 mkdir -p output
 curl --fail --location https://files.rcsb.org/download/2HHB.cif --output output/2hhb.cif
 ./target/release/illustrate output/2hhb.cif --scene examples/hemoglobin.json \
   --output output/hemoglobin.png
 ```
 
-The result is a 922 x 750 PNG. [examples/hemoglobin.json](examples/hemoglobin.json) sets the
-view, atom colors, radii, and outline settings. Edit a scene file to change appearance, or use
-`--width` and `--height` to override its image dimensions.
-See [docs/USAGE.md](docs/USAGE.md) for scene fields, model and assembly selection, and the Rust API.
+Open `output/hemoglobin.png` in your image viewer. The 922 x 750 PNG can be inserted into a
+presentation, poster, or report. After the build, use the same `illustrate` program for new images;
+you do not need Python, a GPU, or a running molecular viewer.
 
-## Use and extend
+## Use your own protein
 
-- [docs/INSTALL.md](docs/INSTALL.md): build the native executable and library.
-- [docs/USAGE.md](docs/USAGE.md): render structures and change scene settings.
-- [docs/CODE_ARCHITECTURE.md](docs/CODE_ARCHITECTURE.md): follow the data and rendering passes.
-- [docs/FILE_STRUCTURE.md](docs/FILE_STRUCTURE.md): find code, examples, tests, and evidence.
+Download a structure's PDBx/mmCIF coordinate file, or use a PDB file you already have.
+Replace `your_protein.cif` with its filename:
 
-## Method and verification
+```bash
+./target/release/illustrate your_protein.cif --output output/my_protein.png
+```
 
-Independent visual review accepts the checked reference scenes, and all 19 reference/native
-silhouette masks match. Clean-source macOS arm64 and emulated Linux x86_64 build, test,
-installation, and rendering checks pass. Physical x86_64 execution has not been tested;
-platform details and local verification commands are in [docs/INSTALL.md](docs/INSTALL.md).
+This creates an 800 x 800 image with automatic framing and different colors for different chains.
+The first model and deposited coordinates are used by default. Waters and hydrogen atoms are
+hidden; other bound molecules are retained. PDBML XML and gzip-compressed coordinate files also work.
 
-- [docs/REFERENCE_SPEC.md](docs/REFERENCE_SPEC.md): reference mathematics and deliberate corrections.
-- [docs/CHANGELOG.md](docs/CHANGELOG.md): implementation and verification history.
-- [docs/active_plans/reports/goodsell_fidelity.md](docs/active_plans/reports/goodsell_fidelity.md):
-  measured source comparisons and protein/DNA/virus assembly rendering.
-- [docs/active_plans/reports/goodsell_native_validation.md](docs/active_plans/reports/goodsell_native_validation.md):
-  clean-source installation, target execution, and verification limits.
+## Make the figure yours
 
-## Scope and attribution
+- Make a larger image with `--width 1600 --height 1200`.
+- Show a biological assembly with `--assembly 1`, when that assembly is defined in the file.
+  Deposited coordinates alone may show only part of the complete complex.
+- Set chain colors, highlight a ligand, or rotate the view with a JSON scene file.
+  [examples/hemoglobin.json](examples/hemoglobin.json) supplies the settings for the image above.
 
-This is a synchronous, CPU-based sphere renderer with an orthographic camera. It produces PNG,
-not meshes or animations. PDBx/mmCIF support targets macromolecular coordinate files with one data
-block; save frames and small-molecule CIF dictionaries are outside the supported input scope.
+Follow [docs/USAGE.md](docs/USAGE.md) for scene-file examples and command options. It also shows
+rendered examples of lambda repressor bound to DNA and a complete virus capsid, with commands
+you can reuse for each.
+
+## Help and scientific method
+
+- [docs/INSTALL.md](docs/INSTALL.md): installation, requirements, and tested platforms.
+- [docs/USAGE.md](docs/USAGE.md): image size, colors, orientation, models, and assemblies.
+- [docs/REFERENCE_SPEC.md](docs/REFERENCE_SPEC.md): rendering method and reference comparisons.
+- [docs/FILE_STRUCTURE.md](docs/FILE_STRUCTURE.md): further project documentation and source layout.
+
+This tool makes static PNG illustrations. It does not create ribbons, molecular surfaces,
+animations, or interactive views.
+
+## Citation and license
 
 The rendering method follows Goodsell DS, Autin L, Olson AJ (2019),
 [*Illustrate: Software for Biomolecular Illustration*](https://doi.org/10.1016/j.str.2019.08.011).
 This is a new Rust implementation; the legacy code was used for comparison and removed.
-Developer verification tools can fetch a pinned reference temporarily. Provenance and reference
-corrections are in
-[docs/REFERENCE_SPEC.md](docs/REFERENCE_SPEC.md).
-
-## License
 
 Source code: [LICENSE.AGPL-3.0](LICENSE.AGPL-3.0).
 

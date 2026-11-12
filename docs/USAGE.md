@@ -25,6 +25,32 @@ curl -L https://files.rcsb.org/download/2HHB.cif -o output/2hhb.cif
 [hemoglobin.json](../examples/hemoglobin.json) specifies a 922 x 750 image, source-style
 orientation and ordered pink/peach protein and red-heme rules.
 
+## More molecular examples
+
+These images were rendered by the same `illustrate` program. The first shows lambda repressor
+bound to DNA (PDB 1LMB), with colors distinguishing the chains. The second shows the complete
+biological assembly 1 of cowpea chlorotic mottle virus (PDB 1CWP).
+
+<!-- screenshots:begin (managed by screenshot-docs) -->
+![Lambda repressor bound to DNA, with different colors for each chain](screenshots/lambda_dna.webp)
+![Complete cowpea chlorotic mottle virus capsid, showing its repeating protein subunits](screenshots/cowpea_capsid.webp)
+<!-- screenshots:end -->
+
+Download the coordinates and make the images:
+
+```bash
+mkdir -p output
+curl --fail --location https://files.rcsb.org/download/1LMB.cif --output output/1lmb.cif
+./target/release/illustrate output/1lmb.cif --output output/lambda_dna.png \
+  --width 960 --height 600
+curl --fail --location https://files.rcsb.org/download/1CWP.cif --output output/1cwp.cif
+./target/release/illustrate output/1cwp.cif --assembly 1 --output output/cowpea_capsid.png \
+  --width 1600 --height 1000
+```
+
+The images are 960 x 600 and 1600 x 1000 PNGs, respectively. The virus example uses
+`--assembly 1` to build the complete capsid from the deposited coordinates and assembly operations.
+
 ## Command-line options
 
 ```text
@@ -91,6 +117,9 @@ rendering does not reread the input. Diagnostics are retained on the prepared sc
 by the CLI.
 
 ## Inputs, output, and limits
+
+Output is currently opaque RGB PNG. Transparent backgrounds and native WebP output are
+high-priority follow-ups in [TODO.md](TODO.md); the documentation WebPs are converted separately.
 
 Input supports PDB/ENT, macromolecular PDBx/mmCIF, and PDBML XML, optionally gzip compressed.
 CIF accepts one data block and no save frames. Alternate locations use highest mean occupancy

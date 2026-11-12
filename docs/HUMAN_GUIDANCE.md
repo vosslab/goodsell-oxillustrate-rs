@@ -8,6 +8,12 @@ origin belongs there too. Rules: [REPO_STYLE.md](REPO_STYLE.md).
 [PROPAGATED HEADER - ENTRIES BELOW ARE YOURS]
 <!-- VENDORED HEADER: END -->
 
+- 2026-11-12: Make alpha-channel/transparent-background support and native WebP output
+  high priorities for the image renderer.
+
+- 2026-11-12: Focus the README on a biology master's student who wants to make a protein
+  image, rather than on developers.
+
 - 2026-11-12: I do not use GitHub workflows. Use the repository's local verification commands.
 
 - 2026-11-12: Respect vendored-file ownership. Repository work does not authorize editing

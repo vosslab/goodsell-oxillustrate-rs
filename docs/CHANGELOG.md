@@ -2,8 +2,23 @@
 
 ## 2026-11-12
 
+### Additions and New Features
+
+- Record transparent-background/alpha PNG support and native WebP output, including alpha,
+  as the top feature priorities in [TODO.md](TODO.md). Clarify that current native output is
+  opaque RGB PNG and documentation WebPs are external conversions; neither feature is added yet.
+- Add current CLI renders of lambda repressor bound to DNA and the complete cowpea chlorotic
+  mottle virus capsid to the usage guide. Store quality-90 WebP captures with their commands,
+  coordinate provenance, and image hashes in
+  [goodsell_readme_capture.md](active_plans/reports/goodsell_readme_capture.md).
+
 ### Fixes and Maintenance
 
+- Rewrite the README for a biology master's student making a protein image: start with real
+  hemoglobin, explain the resulting PNG, and guide structure, size, assembly, color, and view
+  choices. Keep developer internals in supporting documentation and record the audience guidance.
+- Refresh the existing hemoglobin capture from the current release build; its WebP bytes match
+  the previous asset. Inspect all three encoded images; every managed image has a live embed.
 - Trace the collection failure to the archived plan's missing old path in the Git index.
   The current index lists the existing archive path. The initial vendored helper override
   is subsequently removed as recorded below.
@@ -31,6 +46,11 @@
 
 ### Developer Tests and Notes
 
+- Student-focused README/capture verification passes the locked release build, executable help,
+  public structure downloads, all three illustrated examples, own-protein and larger-image
+  commands, and equivalent synthetic PDB/mmCIF/XML renders. Inspect all three quality-90 WebPs;
+  `webpinfo` and `git diff --check` pass. Full repository pytest passes: 947 tests. The README
+  editorial score is 80 to 96; fresh installation and the Rust test suite were not repeated.
 - After the workflow cleanup and removal of the local vendored override, the exact
   `source source_me.sh && pytest tests/` command passes: 945 tests. No Rust code changed;
   Rust checks were not repeated. The master template's current state was not inspected again.
