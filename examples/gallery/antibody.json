@@ -1,0 +1,12 @@
+{
+  "width": 1200,
+  "height": 750,
+  "background": [1, 1, 1],
+  "orientation": [0, 0, 0],
+  "atom_rules": [
+    {"selector": {"kind": "hetero"}, "color": [0.75, 0.65, 0.84]},
+    {"selector": {"chain": {"id": "A"}}, "color": [0.99, 0.81, 0.57]},
+    {"selector": {"chain": {"id": "C"}}, "color": [0.99, 0.81, 0.57]},
+    {"selector": {"kind": "polymer"}, "color": [0.94, 0.62, 0.54]}
+  ]
+}

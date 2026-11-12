@@ -1,0 +1,9 @@
+{
+  "width": 1200,
+  "height": 750,
+  "background": [1, 1, 1],
+  "orientation": [15, 20, 0],
+  "atom_rules": [
+    {"selector": {"kind": "polymer"}, "color": [0.98, 0.83, 0.38]}
+  ]
+}

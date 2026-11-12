@@ -18,3 +18,12 @@ an explicit matched center as recorded in the fidelity report.
 [render_passes.rs](render_passes.rs) is a development-only diagnostic probe. It reads a local
 structure and JSON settings, then exports the actual native production passes and timings.
 It does not add a public debugging interface to the library.
+
+The [gallery/](gallery/) scene files reproduce the eight examples in
+[docs/GALLERY.md](../docs/GALLERY.md). They select poster-inspired colors, views, and assemblies.
+Run [devel/render_gallery.sh](../devel/render_gallery.sh) from the repository to refresh the
+native PNGs and quality-90 documentation WebPs.
+
+[cowpea_capsid.json](cowpea_capsid.json) selects assembly 1 of PDB 1CWP with a smaller contour
+neighborhood for a lightly outlined whole-capsid image. The nucleosome, GroEL/GroES, and
+rhinovirus gallery scenes use the same contour setting. Other rendering defaults are unchanged.

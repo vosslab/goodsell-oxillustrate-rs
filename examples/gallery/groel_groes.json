@@ -1,0 +1,19 @@
+{
+  "width": 1200,
+  "height": 750,
+  "background": [1, 1, 1],
+  "assembly": "1",
+  "orientation": [15, 70, 0],
+  "outlines": {"kernel": 3},
+  "atom_rules": [
+    {"selector": {"chain": {"id": "O"}}, "color": [0.97, 0.59, 0.55]},
+    {"selector": {"chain": {"id": "P"}}, "color": [0.97, 0.59, 0.55]},
+    {"selector": {"chain": {"id": "Q"}}, "color": [0.97, 0.59, 0.55]},
+    {"selector": {"chain": {"id": "R"}}, "color": [0.97, 0.59, 0.55]},
+    {"selector": {"chain": {"id": "S"}}, "color": [0.97, 0.59, 0.55]},
+    {"selector": {"chain": {"id": "T"}}, "color": [0.97, 0.59, 0.55]},
+    {"selector": {"chain": {"id": "U"}}, "color": [0.97, 0.59, 0.55]},
+    {"selector": {"kind": "polymer"}, "color": [0.55, 0.71, 0.85]},
+    {"selector": {"kind": "hetero"}, "color": [0.98, 0.81, 0.40]}
+  ]
+}

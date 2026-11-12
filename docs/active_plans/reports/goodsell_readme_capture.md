@@ -1,5 +1,66 @@
 # Molecular illustration documentation captures
 
+## Transparency and contour correction
+
+The user's 2026-11-12 review identified two misleading examples. The asset named
+`transparent_backgrounds.webp` was an opaque light/dark comparison, and the whole-capsid render
+had excessive black contours. The following changes supersede the earlier capture receipts.
+
+- Replace the comparison with actual native lossless RGBA WebP, rendered with
+  `--pdb 2hhb --scene examples/hemoglobin.json --background transparent`. Transparent pixels
+  expose the browser's page background. There is no baked-in color, checkerboard, or label.
+- Use `"outlines": {"kernel": 3}` in the cowpea capsid, rhinovirus, GroEL/GroES, and nucleosome
+  scenes. This changes only the existing contour neighborhood from 5 x 5 to 3 x 3. Subunit
+  boundaries and conical shadows remain enabled; molecular geometry, colors, camera, source
+  mathematics, global defaults, and the explicit hemoglobin reference scene are unchanged.
+
+Matched 1600 x 1000 renders of local 1CWP assembly 1 isolate the cause. Measurements use Pillow's
+8-bit grayscale values over one fixed foreground mask derived from the original opaque render;
+near-black means a grayscale value below 32. The original native PNG reproduces its prior hash.
+
+| Single change | Mean grayscale | Near-black foreground |
+| --- | ---: | ---: |
+| Original settings | 106.73 | 25.33% |
+| Shadows disabled | 114.14 | 24.65% |
+| Contours disabled | 149.77 | 4.97% |
+| Shadow floor raised from 0.2 to 0.7 | 107.10 | 25.24% |
+| Contour kernel changed from 4 to 3 | 146.91 | 5.17% |
+
+The contour pass is the main source of darkness in this image. Raising the shadow floor is
+insufficient. Kernel 3 retains subtle atom contours and the subunit boundaries while avoiding
+the dense black texture. Contact sheets for these pass comparisons and three other large
+assemblies remain in ignored `output/style_review/`.
+
+Fresh native `--pdb` captures succeeded for all five changed images. Four opaque documentation
+images use `cwebp -q 90` under `/tmp`; the transparency asset is the native encoder's exact output
+so the documentation directly demonstrates alpha preservation. All five final assets were viewed.
+
+| Asset slug | Dimensions | Bytes | Encoding |
+| --- | --- | ---: | --- |
+| transparent_backgrounds | 922 x 750 | 410430 | Native lossless RGBA WebP |
+| cowpea_capsid | 1600 x 1000 | 249620 | Quality-90 RGB WebP |
+| gallery_rhinovirus | 1600 x 1000 | 243904 | Quality-90 RGB WebP |
+| gallery_groel_groes | 1200 x 750 | 80078 | Quality-90 RGB WebP |
+| gallery_nucleosome | 1200 x 750 | 83822 | Quality-90 RGB WebP |
+
+Current WebP SHA-256 values:
+
+```text
+transparent_backgrounds 14b39b553c3cfee5170a82681ea06922460bb8002dfa1d51ad14b3a6321c1248
+cowpea_capsid f8e843a64e64b4b5ec8f348ddec58e178d3c91c21f7e6735fdd4f2db038d9c8f
+gallery_rhinovirus 3de47cda9de2ca5fa51092e3518f2801df5d76e87263c93b8d70fe2b99ea477c
+gallery_groel_groes a82d7fd249d65b37693d7a98154a53c942c228a894eb21b3aa9b72d6c4f88565
+gallery_nucleosome 31d635bc3f0890f90da246b3c5f1dd3d027c13f957e86962f3146092c0642a4f
+```
+
+Verification: the current native PNG and documentation WebP decode to identical RGBA bytes;
+their alpha includes transparent, partial-coverage, and opaque pixels. Corrected native renders
+match the local contour-ablation captures exactly, with clear borders. Three temporary capture
+checks passed and were removed. `webpinfo` reports no errors for all five images. The locked
+release build and all 50 Rust tests pass; `source source_me.sh && pytest tests/` passes all 1003
+repository checks. Shell syntax and `git diff --check` pass. No Rust or vendored files changed.
+Browser layout, Linux execution, and Fortran-oracle comparisons were not repeated.
+
 ## Native feature update
 
 The later 2026-11-12 implementation adds native `--pdb` downloads, transparent backgrounds,
@@ -9,10 +70,10 @@ quality-90 conversion for documentation assets. Hemoglobin and capsid opaque PNG
 byte-for-byte by the updated renderer and live downloader. Gallery commands explicitly request
 white backgrounds to preserve those existing views.
 
-The new [transparent_backgrounds.webp](../../screenshots/transparent_backgrounds.webp) compares
-the same native RGBA hemoglobin over white and dark slide colors. It is 1600 x 1000, 169428 bytes,
-encoded at quality 90 and visually inspected. Native PNG and lossless WebP source pixels match
-exactly. This fourth asset has a live usage-guide embed; no existing image is removed.
+The initial `transparent_backgrounds.webp` compared the same native RGBA hemoglobin over white
+and dark slide colors. That opaque 1600 x 1000 comparison was misleading under this filename;
+the correction above replaces it with actual alpha output. Native PNG and lossless WebP source
+pixels match exactly. This fourth asset has a live usage-guide embed.
 
 ## Original gallery capture
 

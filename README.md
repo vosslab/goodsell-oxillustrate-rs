@@ -12,6 +12,9 @@ as space-filling spheres, with shadows and outlines that make molecular boundari
 Human hemoglobin, PDB entry 2HHB. Protein chain pairs are pink and peach; heme groups are red.
 The commands below reproduce this image.
 
+Browse [docs/GALLERY.md](docs/GALLERY.md) for eight poster-inspired examples, from a small enzyme
+to a complete virus, with colors, scene files, and commands you can reuse.
+
 ## Quick start
 
 The current version installs from source. You need Rust 1.99.1 or newer with Cargo for the

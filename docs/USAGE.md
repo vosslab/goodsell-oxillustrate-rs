@@ -41,18 +41,20 @@ In JSON, `"background": null` means transparent; an RGB triple such as `[1,1,1]`
 Existing RGB-background scene files keep their appearance. Atom surfaces remain opaque;
 outline-only pixels carry black with fractional alpha, avoiding a white fringe when composited.
 Depth fog still uses the scene's explicit fog color; transparency does not recolor molecular atoms.
+In a browser, transparent areas show the page background. The hemoglobin image below has real
+alpha, with no colored background or checkerboard baked into the file.
 
 ## More molecular examples
 
 These images were rendered by the same `illustrate` program. The first shows lambda repressor
 bound to DNA (PDB 1LMB), with colors distinguishing the chains. The second shows the complete
-biological assembly 1 of cowpea chlorotic mottle virus (PDB 1CWP). The last image shows the same
-transparent hemoglobin render composited over light and dark slide backgrounds.
+biological assembly 1 of cowpea chlorotic mottle virus (PDB 1CWP), using lighter contour settings.
+The last image is hemoglobin on a transparent background; its surroundings follow the page color.
 
 <!-- screenshots:begin (managed by screenshot-docs) -->
 ![Lambda repressor bound to DNA, with different colors for each chain](screenshots/lambda_dna.webp)
 ![Complete cowpea chlorotic mottle virus capsid, showing its repeating protein subunits](screenshots/cowpea_capsid.webp)
-![The same transparent hemoglobin illustration over light and dark backgrounds, without a white fringe](screenshots/transparent_backgrounds.webp)
+![Hemoglobin with a transparent background that shows the browser page behind the molecule](screenshots/transparent_backgrounds.webp)
 <!-- screenshots:end -->
 
 Download the coordinates and make the images:
@@ -61,12 +63,15 @@ Download the coordinates and make the images:
 mkdir -p output
 ./target/release/illustrate --pdb 1lmb --background white --output output/lambda_dna.png \
   --width 960 --height 600
-./target/release/illustrate --pdb 1cwp --assembly 1 --background white --output output/cowpea_capsid.png \
-  --width 1600 --height 1000
+./target/release/illustrate --pdb 1cwp --scene examples/cowpea_capsid.json \
+  --output output/cowpea_capsid.png
+./target/release/illustrate --pdb 2hhb --scene examples/hemoglobin.json \
+  --background transparent --output output/hemoglobin_transparent.webp
 ```
 
-The images are 960 x 600 and 1600 x 1000 PNGs, respectively. The virus example uses
-`--assembly 1` to build the complete capsid from the deposited coordinates and assembly operations.
+The first two commands produce 960 x 600 and 1600 x 1000 PNGs, respectively. The virus scene
+selects assembly 1 to build the complete capsid from the deposited coordinates and assembly
+operations. That choice is saved in [cowpea_capsid.json](../examples/cowpea_capsid.json).
 
 ## Command-line options
 
@@ -117,6 +122,24 @@ residue-number selectors default to the author namespace; use `"namespace": "lab
 for label IDs. A matching rule changes only supplied appearance fields; `"omit": false` can restore
 water or hydrogen. Full field definitions and defaults are documented on `SceneSettings` in
 [src/settings.rs](../src/settings.rs) and in generated Rust API documentation.
+
+### Lighter outlines and shadows
+
+If a large assembly looks too dark or densely inked, use this in its scene file:
+
+```json
+{"outlines": {"kernel": 3}}
+```
+
+This uses a 3 x 3 contour neighborhood instead of the default 5 x 5 neighborhood. The smaller
+neighborhood keeps fine surface detail from turning into thick black lines when many atoms fit
+in a small image. The capsid scene and the larger gallery assemblies use this setting; shadows
+and subunit boundaries stay enabled.
+
+For softer shadows, use `"shadows": {"brightness_floor": 0.7}`. A larger floor limits how dark
+shadows can become; the default is 0.2. To disable shadows entirely, use
+`"shadows": {"enabled": false}`. To disable depth contours while retaining subunit boundaries,
+use `"outlines": {"contour_enabled": false}`. These are scene settings passed with `--scene`.
 
 ## Rust API
 

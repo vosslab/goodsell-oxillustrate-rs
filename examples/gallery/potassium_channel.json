@@ -1,0 +1,13 @@
+{
+  "width": 1200,
+  "height": 750,
+  "background": [1, 1, 1],
+  "assembly": "1",
+  "orientation": [0, -21, 0],
+  "atom_rules": [
+    {"selector": {"element": "K"}, "color": [0.98, 0.68, 0.25]},
+    {"selector": {"chain": {"id": "A"}}, "color": [0.57, 0.70, 0.87]},
+    {"selector": {"chain": {"id": "C"}}, "color": [0.57, 0.70, 0.87]},
+    {"selector": {"kind": "polymer"}, "color": [0.73, 0.65, 0.85]}
+  ]
+}

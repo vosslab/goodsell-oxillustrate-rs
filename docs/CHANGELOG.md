@@ -4,6 +4,14 @@
 
 ### Additions and New Features
 
+- Add [GALLERY.md](GALLERY.md) with eight fresh molecular illustrations selected from the local
+  2002 and 2014 Molecular Machinery posters: lysozyme, GFP, antibody, potassium channel, tRNA,
+  nucleosome, GroEL/GroES, and rhinovirus. Include biological captions, PDB sources, reusable
+  scene files, and native download/render commands. Link the gallery from the README.
+- Add [devel/render_gallery.sh](../devel/render_gallery.sh) to regenerate the eight native PNGs
+  and compact quality-90 WebPs. Keep the two poster PDFs as ignored references; no poster image
+  is copied into the gallery. Each molecule is framed independently, with that scale distinction
+  stated on the page.
 - Implement native `--pdb ID` / `load_pdb` RCSB downloads without curl. Fetch mmCIF with a
   synchronous TLS client, validated legacy/extended accessions, a 60-second timeout, and the
   existing 1 GiB input bound. Keep local input available and mutually exclusive with `--pdb`.
@@ -27,6 +35,15 @@
 
 ### Fixes and Maintenance
 
+- Replace the misleading opaque `transparent_backgrounds.webp` comparison with actual native
+  RGBA WebP. The usage guide now demonstrates transparency directly against the page background.
+- Isolate the dark whole-capsid appearance to dense depth contours: changing the existing
+  contour kernel from 4 to 3 reduces near-black foreground pixels from 25.33% to 5.17% on the
+  matched 1CWP render. Add [cowpea_capsid.json](../examples/cowpea_capsid.json), update the three
+  larger gallery scenes, and refresh all four images. Preserve shadows, subunit boundaries,
+  the reference hemoglobin scene, global defaults, and renderer mathematics. Document the
+  existing outline and shadow controls; record measurements and hashes in
+  [goodsell_readme_capture.md](active_plans/reports/goodsell_readme_capture.md).
 - Update student-facing commands to download and render directly; document native format and
   background selection, API additions, and completed feature priorities. Add an actual light/dark
   transparency comparison in [USAGE.md](USAGE.md).
@@ -67,6 +84,19 @@
 
 ### Developer Tests and Notes
 
+- Transparency/contour correction verification passes all 50 Rust tests and 1003 repository
+  pytest checks. Five fresh native downloads/renders succeed, all final WebPs are visually
+  inspected and decode without errors, and the transparent capture matches native PNG RGBA
+  pixels exactly. Three temporary capture checks pass and are removed. No browser, Linux, or
+  Fortran-oracle comparison is repeated; application Rust and vendored files are unchanged.
+- Build the current release, render all eight gallery scenes twice through native `--pdb`, and
+  inspect all final WebPs. The potassium-channel camera is adjusted to show the pore; the other
+  seven captures reproduce their first-run hashes. All PNG bounds have at least 28 pixels of
+  clear border; WebP metadata reports no errors. The transparent nucleosome/WebP command also
+  succeeds. Gallery work changes no application Rust or vendored files.
+- Gallery verification passes `bash -n`, `git diff --check`, and the exact
+  `source source_me.sh && pytest tests/` command: 1003 tests. Poster PDFs remain ignored and
+  untracked. Capture details are in [gallery_capture.md](active_plans/reports/gallery_capture.md).
 - Native feature checks pass formatting, locked all-target compilation, 44 unit tests, 5 CLI/API
   integration tests, 1 doctest, Clippy with warnings denied, and rustdoc with missing docs denied.
   Fresh repository pytest passes: 953 tests before archival and 957 after archival/link repair.

@@ -1,0 +1,14 @@
+{
+  "width": 1600,
+  "height": 1000,
+  "background": [1, 1, 1],
+  "assembly": "1",
+  "orientation": [10, 15, 0],
+  "outlines": {"kernel": 3},
+  "atom_rules": [
+    {"selector": {"chain": {"id": "1"}}, "color": [0.56, 0.71, 0.88]},
+    {"selector": {"chain": {"id": "2"}}, "color": [0.46, 0.77, 0.77]},
+    {"selector": {"chain": {"id": "3"}}, "color": [0.75, 0.59, 0.81]},
+    {"selector": {"chain": {"id": "4"}}, "color": [0.91, 0.64, 0.73]}
+  ]
+}

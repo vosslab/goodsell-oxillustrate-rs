@@ -47,6 +47,7 @@ legacy reference copies were removed after final comparisons and acceptance.
 ## Documentation map
 
 - [../README.md](../README.md): project purpose and first render.
+- [GALLERY.md](GALLERY.md): eight poster-inspired molecular images with scene files and commands.
 - [INSTALL.md](INSTALL.md) and [USAGE.md](USAGE.md): setup and practical workflows.
 - [CODE_ARCHITECTURE.md](CODE_ARCHITECTURE.md): public pipeline and module ownership.
 - [REFERENCE_SPEC.md](REFERENCE_SPEC.md): scientific sources and executable mathematics.

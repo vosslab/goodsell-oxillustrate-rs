@@ -1,0 +1,15 @@
+{
+  "width": 1200,
+  "height": 750,
+  "background": [1, 1, 1],
+  "assembly": "1",
+  "orientation": [20, 0, 0],
+  "outlines": {"kernel": 3},
+  "atom_rules": [
+    {"selector": {"residue_name": "DA"}, "color": [0.99, 0.75, 0.39]},
+    {"selector": {"residue_name": "DC"}, "color": [0.99, 0.75, 0.39]},
+    {"selector": {"residue_name": "DG"}, "color": [0.99, 0.75, 0.39]},
+    {"selector": {"residue_name": "DT"}, "color": [0.99, 0.75, 0.39]},
+    {"selector": {"kind": "polymer"}, "color": [0.55, 0.73, 0.86]}
+  ]
+}
